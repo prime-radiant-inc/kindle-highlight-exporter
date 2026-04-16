@@ -35,13 +35,17 @@ function parseAddedDate(headerText) {
 function parseAnnotationMetadata(headerText) {
   const metadata = {};
 
-  for (const part of headerText.split(" | ")) {
-    if (part.startsWith("Location ")) {
-      metadata.location = part.replace("Location ", "");
-    } else if (part.startsWith("Page ")) {
-      metadata.page = part.replace("Page ", "");
-    } else if (part.startsWith("Added on ")) {
-      metadata.added = parseAddedDate(part);
+  for (const part of headerText.split("|")) {
+    const normalizedPart = part.replace(/\u00a0/g, " ").trim();
+    const locationMatch = normalizedPart.match(/^Location:?\s*(.+)$/i);
+    const pageMatch = normalizedPart.match(/^Page:?\s*(.+)$/i);
+
+    if (locationMatch) {
+      metadata.location = locationMatch[1].trim();
+    } else if (pageMatch) {
+      metadata.page = pageMatch[1].trim();
+    } else if (normalizedPart.startsWith("Added on ")) {
+      metadata.added = parseAddedDate(normalizedPart);
     }
   }
 
@@ -50,6 +54,25 @@ function parseAnnotationMetadata(headerText) {
 
 function joinPresentLines(lines) {
   return lines.filter(Boolean).join("\n");
+}
+
+function getPaginationValue(container, selector) {
+  return (
+    container.querySelector(`input${selector}`)?.value?.trim() ??
+    container.querySelector(`${selector} input`)?.value?.trim() ??
+    container.querySelector(selector)?.getAttribute("value")?.trim() ??
+    ""
+  );
+}
+
+function getAnnotationRows(container) {
+  const wrappedRows = container.querySelectorAll("#kp-notebook-annotations > .a-row.a-spacing-base");
+
+  if (wrappedRows.length > 0) {
+    return Array.from(wrappedRows);
+  }
+
+  return Array.from(container.children).filter((child) => child.matches?.(".a-row.a-spacing-base"));
 }
 
 export function scrapeBookList(document) {
@@ -70,26 +93,25 @@ export function parseAnnotationPage(html, document) {
   const container = document.createElement("div");
   container.innerHTML = html;
 
-  const annotations = Array.from(
-    container.querySelectorAll("#kp-notebook-annotations > .a-row.a-spacing-base")
-  ).map((annotationRow) => {
+  const annotations = getAnnotationRows(container).map((annotationRow) => {
     const headerText = getTextContent(
       annotationRow.querySelector("#annotationHighlightHeader, #annotationNoteHeader")
     );
     const note = getTextContent(annotationRow.querySelector("#note"));
+    const locationInput = annotationRow.querySelector("input[id^='kp-annotation-location']")?.value?.trim();
 
     return {
       highlight: getTextContent(annotationRow.querySelector("#highlight")),
       ...parseAnnotationMetadata(headerText),
+      ...(locationInput ? { location: locationInput } : {}),
       ...(note ? { note } : {})
     };
   });
 
   return {
     annotations,
-    nextToken: container.querySelector(".kp-notebook-annotations-next-page-start input")?.value?.trim() ?? "",
-    contentLimitState:
-      container.querySelector(".kp-notebook-content-limit-state input")?.value?.trim() ?? ""
+    nextToken: getPaginationValue(container, ".kp-notebook-annotations-next-page-start"),
+    contentLimitState: getPaginationValue(container, ".kp-notebook-content-limit-state")
   };
 }
 

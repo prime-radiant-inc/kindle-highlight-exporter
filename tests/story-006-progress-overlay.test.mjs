@@ -104,6 +104,8 @@ test("runClippingsBookmarklet exports books and removes the overlay on success",
     FakeJsZip.instances[0].files.map((file) => file.name),
     ["the-pragmatic-programmer.md", "deep-work.md"]
   );
+  assert.match(FakeJsZip.instances[0].files[0].content, /Care about your craft\./);
+  assert.match(FakeJsZip.instances[0].files[0].content, /Core thesis\. Revisit when motivation dips\./);
 });
 
 test("runClippingsBookmarklet leaves the overlay visible with an error when every book fails", async () => {
