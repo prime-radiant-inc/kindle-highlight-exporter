@@ -4,8 +4,278 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clippings</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --page: #f6f2ea;
+        --surface: #fffdfa;
+        --surface-border: #d8cab3;
+        --text: #231b12;
+        --muted: #695845;
+        --accent: #9d472f;
+        --accent-strong: #73301d;
+        --sample: #1c1713;
+        --sample-text: #f8f2e9;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Georgia, "Times New Roman", serif;
+        background:
+          radial-gradient(circle at top left, rgba(157, 71, 47, 0.12), transparent 32rem),
+          linear-gradient(180deg, #fbf8f2 0%, var(--page) 100%);
+        color: var(--text);
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .shell {
+        min-height: 100vh;
+      }
+
+      .header {
+        border-bottom: 1px solid rgba(35, 27, 18, 0.08);
+        background: rgba(255, 253, 250, 0.86);
+        backdrop-filter: blur(12px);
+      }
+
+      .header-inner,
+      .content {
+        width: min(56rem, calc(100% - 2rem));
+        margin: 0 auto;
+      }
+
+      .header-inner {
+        display: flex;
+        gap: 0.75rem;
+        align-items: baseline;
+        padding: 1.25rem 0;
+      }
+
+      .brand {
+        margin: 0;
+        font-size: 1.35rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .tagline {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .content {
+        padding: 4rem 0 5rem;
+      }
+
+      .hero {
+        margin-bottom: 2rem;
+      }
+
+      .hero h1 {
+        margin: 0 0 0.75rem;
+        font-size: clamp(2.6rem, 7vw, 4.5rem);
+        line-height: 0.95;
+      }
+
+      .hero p {
+        margin: 0;
+        max-width: 42rem;
+        color: var(--muted);
+        font-size: 1.15rem;
+        line-height: 1.6;
+      }
+
+      .install-panel,
+      .steps,
+      .sample {
+        background: rgba(255, 253, 250, 0.92);
+        border: 1px solid rgba(35, 27, 18, 0.08);
+        border-radius: 1.5rem;
+        box-shadow: 0 20px 60px rgba(76, 48, 20, 0.08);
+      }
+
+      .install-panel {
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .install-label {
+        margin: 0 0 1rem;
+        color: var(--muted);
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+      }
+
+      .bookmarklet {
+        display: inline-block;
+        padding: 0.95rem 1.4rem;
+        border: 2px dashed rgba(115, 48, 29, 0.45);
+        border-radius: 999px;
+        background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
+        color: #fff8f1;
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        text-decoration: none;
+        cursor: grab;
+        user-select: none;
+      }
+
+      .bookmarklet:active {
+        cursor: grabbing;
+      }
+
+      .install-help {
+        margin: 1rem 0 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .steps {
+        padding: 1.75rem 2rem;
+        margin: 0 0 1.5rem;
+      }
+
+      .steps ol {
+        margin: 0;
+        padding-left: 1.5rem;
+      }
+
+      .steps li + li {
+        margin-top: 1rem;
+      }
+
+      .steps strong {
+        display: block;
+        margin-bottom: 0.25rem;
+        font-size: 1.05rem;
+      }
+
+      .steps span {
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .sample {
+        padding: 1.5rem;
+      }
+
+      .sample-label {
+        margin: 0 0 0.9rem;
+        color: var(--muted);
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+      }
+
+      pre {
+        margin: 0;
+        padding: 1.4rem;
+        overflow-x: auto;
+        border-radius: 1rem;
+        background: var(--sample);
+        color: var(--sample-text);
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        font-size: 0.9rem;
+        line-height: 1.7;
+      }
+
+      code {
+        font-family: inherit;
+      }
+
+      @media (max-width: 42rem) {
+        .header-inner {
+          flex-direction: column;
+          gap: 0.35rem;
+        }
+
+        .content {
+          padding-top: 2.5rem;
+        }
+
+        .install-panel,
+        .steps,
+        .sample {
+          padding-left: 1.2rem;
+          padding-right: 1.2rem;
+        }
+      }
+    </style>
   </head>
   <body>
-    <a href="__BOOKMARKLET_HREF__">Export Kindle Highlights</a>
+    <div class="shell">
+      <header class="header">
+        <div class="header-inner">
+          <p class="brand">Clippings</p>
+          <p class="tagline">Kindle highlights to markdown</p>
+        </div>
+      </header>
+
+      <main class="content">
+        <section class="hero">
+          <h1>Export your Kindle highlights.</h1>
+          <p>
+            One bookmarklet click on Kindle Notebook downloads every highlight and note you
+            have into tidy markdown files, one book per file, ready for local tools and plain
+            text workflows.
+          </p>
+        </section>
+
+        <section class="install-panel">
+          <p class="install-label">Step 1 — Drag this into your bookmarks bar</p>
+          <a class="bookmarklet" href="__BOOKMARKLET_HREF__" draggable="true">Export Kindle Highlights</a>
+          <p class="install-help">Keep the button in your browser bookmarks bar so you can run the export from Kindle Notebook.</p>
+        </section>
+
+        <section class="steps">
+          <ol start="2">
+            <li>
+              <strong>Open Kindle Notebook</strong>
+              <span>Visit <a href="https://read.amazon.com/notebook" target="_blank" rel="noreferrer">read.amazon.com/notebook</a> while logged in to Amazon.</span>
+            </li>
+            <li>
+              <strong>Click the bookmarklet</strong>
+              <span>Use <em>Export Kindle Highlights</em> from your bookmarks bar to start the scrape and export flow.</span>
+            </li>
+            <li>
+              <strong>Download your zip</strong>
+              <span>A zip file downloads automatically with one markdown file per book.</span>
+            </li>
+          </ol>
+        </section>
+
+        <section class="sample">
+          <p class="sample-label">Sample markdown output</p>
+          <pre><code># The Pragmatic Programmer
+author: David Thomas, Andrew Hunt
+asin: B07VRS84D1
+last_annotated: 2024-11-03
+highlights: 24
+notes: 6
+
+---
+
+location: 312 | page: 28 | added: 2024-10-15
+&lt;highlight&gt;
+Care about your craft.
+&lt;/highlight&gt;
+&lt;note&gt;
+Core thesis. Revisit when motivation dips.
+&lt;/note&gt;</code></pre>
+        </section>
+      </main>
+    </div>
   </body>
 </html>
