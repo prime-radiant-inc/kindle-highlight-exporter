@@ -340,6 +340,55 @@ export function createProgressOverlay(document) {
   };
 }
 
-export function runClippingsBookmarklet() {
-  window.alert("Clippings bookmarklet placeholder");
+export async function runClippingsBookmarklet(runtime = globalThis) {
+  const document = runtime.document;
+  const fetchImpl = runtime.fetchImpl ?? runtime.fetch?.bind(runtime) ?? globalThis.fetch?.bind(globalThis);
+  const overlay = createProgressOverlay(document);
+
+  try {
+    const books = scrapeBookList(document);
+
+    if (!books.length) {
+      const message = "No Kindle Notebook books were found on this page.";
+      overlay.showError(message);
+
+      return {
+        books: [],
+        errors: [{ message }]
+      };
+    }
+
+    overlay.update(`Fetching book 1 of ${books.length}...`, 0, books.length);
+
+    const result = await scrapeAnnotationsByBook(books, {
+      document,
+      fetchImpl,
+      overlay
+    });
+
+    if (!result.books.length) {
+      overlay.showError(result.errors[0]?.message ?? "No books could be exported.");
+      return result;
+    }
+
+    overlay.update("Preparing download...", result.books.length, result.books.length);
+
+    await downloadZip(result.books, {
+      document,
+      exportDate: runtime.exportDate,
+      jszipCtor: runtime.jszipCtor,
+      urlApi: runtime.urlApi ?? runtime.URL ?? globalThis.URL
+    });
+
+    overlay.remove();
+
+    return result;
+  } catch (error) {
+    overlay.showError(error.message);
+
+    return {
+      books: [],
+      errors: [{ message: error.message }]
+    };
+  }
 }
