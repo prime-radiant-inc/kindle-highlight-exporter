@@ -47,6 +47,10 @@ function parseAnnotationMetadata(headerText) {
   return metadata;
 }
 
+function joinPresentLines(lines) {
+  return lines.filter(Boolean).join("\n");
+}
+
 export function scrapeBookList(document) {
   return Array.from(document.querySelectorAll("#kp-notebook-library > div")).map((bookCard) => {
     const authorText = getTextContent(bookCard.querySelector("p.kp-notebook-searchable"));
@@ -143,6 +147,51 @@ export async function scrapeAnnotationsByBook(books, options) {
   return {
     books: completeBooks,
     errors
+  };
+}
+
+export function slugifyTitle(title) {
+  return title
+    .normalize("NFKD")
+    .replace(/[^\w\s-]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+export function buildMarkdownFile(book) {
+  const notesCount = book.annotations.filter((annotation) => annotation.note).length;
+  const header = joinPresentLines([
+    `# ${book.title}`,
+    "",
+    book.author ? `author: ${book.author}` : "",
+    book.asin ? `asin: ${book.asin}` : "",
+    book.lastAnnotated ? `last_annotated: ${book.lastAnnotated}` : "",
+    `highlights: ${book.annotations.length}`,
+    `notes: ${notesCount}`
+  ]);
+  const sections = book.annotations.map((annotation) =>
+    joinPresentLines([
+      [
+        annotation.location ? `location: ${annotation.location}` : "",
+        annotation.page ? `page: ${annotation.page}` : "",
+        annotation.added ? `added: ${annotation.added}` : ""
+      ]
+        .filter(Boolean)
+        .join(" | "),
+      "<highlight>",
+      annotation.highlight,
+      "</highlight>",
+      annotation.note ? "<note>" : "",
+      annotation.note ?? "",
+      annotation.note ? "</note>" : ""
+    ])
+  );
+
+  return {
+    name: `${slugifyTitle(book.title)}.md`,
+    content: [header, ...sections].join("\n\n---\n\n")
   };
 }
 
