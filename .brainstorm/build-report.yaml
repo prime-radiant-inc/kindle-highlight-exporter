@@ -1,0 +1,49 @@
+version: 1
+
+product:
+  name: "Clippings"
+  slug: "kindle-highlight-exporter"
+
+stories:
+  - id: "story-001"
+    status: "done"
+    notes: "Static HTML build verified by automated tests. Live browser drag-and-drop was not manually verified because the local browser tool was unavailable."
+    commits:
+      - "d463e9b"
+      - "fc83019"
+
+  - id: "story-002"
+    status: "done"
+    notes: ""
+    commits:
+      - "4cc1243"
+
+  - id: "story-003"
+    status: "done"
+    notes: ""
+    commits:
+      - "03e60c1"
+
+  - id: "story-004"
+    status: "done"
+    notes: ""
+    commits:
+      - "46049d7"
+
+  - id: "story-005"
+    status: "done"
+    notes: ""
+    commits:
+      - "aa1f02d"
+
+  - id: "story-006"
+    status: "done"
+    notes: ""
+    commits:
+      - "bf46f19"
+      - "c6965aa"
+
+summary: |
+  Implemented all six stories for the Clippings bookmarklet.
+  Fresh verification passes on `npm test` and `npm run build`.
+  The generated `index.html` is in sync with the source bookmarklet module.
