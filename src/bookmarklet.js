@@ -368,7 +368,10 @@ export async function runClippingsBookmarklet(runtime = globalThis) {
   const overlay = createProgressOverlay(document);
 
   try {
-    const books = scrapeBookList(document);
+    const books = scrapeBookList(document).slice(
+      0,
+      runtime.devMaxBooks && runtime.devMaxBooks > 0 ? runtime.devMaxBooks : Infinity
+    );
 
     if (!books.length) {
       const message = "No Kindle Notebook books were found on this page.";

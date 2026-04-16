@@ -145,3 +145,62 @@ test("runClippingsBookmarklet leaves the overlay visible with an error when ever
   assert.match(overlay.textContent, /Request failed/);
   assert.equal(overlay.querySelector("button")?.textContent, "Dismiss");
 });
+
+test("runClippingsBookmarklet respects a dev max-book cap", async () => {
+  const window = new JSDOM(libraryHtml).window;
+  const { document } = window;
+  const fetchCalls = [];
+
+  class FakeJsZip {
+    static instances = [];
+
+    constructor() {
+      this.files = [];
+      FakeJsZip.instances.push(this);
+    }
+
+    file(name, content) {
+      this.files.push({ name, content });
+    }
+
+    async generateAsync() {
+      return new Blob(["zip"]);
+    }
+  }
+
+  const result = await bookmarklet.runClippingsBookmarklet({
+    document,
+    devMaxBooks: 1,
+    fetchImpl: async (url) => {
+      fetchCalls.push(url);
+      const parsedUrl = new URL(url);
+      const asin = parsedUrl.searchParams.get("asin");
+      const token = parsedUrl.searchParams.get("token");
+
+      if (asin === "B07VRS84D1" && token === "") {
+        return new Response(pageOneHtml, { status: 200 });
+      }
+
+      if (asin === "B07VRS84D1" && token === "TOKEN_2") {
+        return new Response(pageTwoHtml, { status: 200 });
+      }
+
+      throw new Error(`Unexpected request: ${url}`);
+    },
+    jszipCtor: FakeJsZip,
+    urlApi: {
+      createObjectURL() {
+        return "blob:clippings";
+      },
+      revokeObjectURL() {}
+    }
+  });
+
+  assert.deepEqual(
+    FakeJsZip.instances[0].files.map((file) => file.name),
+    ["the-pragmatic-programmer.md"]
+  );
+  assert.deepEqual(result.errors, []);
+  assert.equal(fetchCalls.length, 2);
+  assert.ok(fetchCalls.every((url) => url.includes("asin=B07VRS84D1")));
+});

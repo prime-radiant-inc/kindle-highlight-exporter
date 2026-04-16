@@ -19,3 +19,20 @@ test("build writes a static installation page with a bookmarklet link", () => {
   assert.match(html, /&lt;highlight&gt;/);
   assert.match(html, /&lt;note&gt;/);
 });
+
+test("dev build injects the max-book cap into the bookmarklet payload", () => {
+  execFileSync("node", ["scripts/build.mjs"], {
+    env: {
+      ...process.env,
+      DEV_MAX_BOOKS: "5"
+    }
+  });
+  const html = readFileSync("index.html", "utf8");
+  const hrefMatch = html.match(/href="([^"]+)"/);
+
+  assert.ok(hrefMatch);
+
+  const payload = decodeURIComponent(hrefMatch[1].replace(/^javascript:/, ""));
+
+  assert.match(payload, /devMaxBooks:\s*5/);
+});

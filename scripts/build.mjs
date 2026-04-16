@@ -8,18 +8,33 @@ const templatePath = path.join(projectRoot, "src", "index.template.html");
 const bookmarkletPath = path.join(projectRoot, "src", "bookmarklet.js");
 const outputPath = path.join(projectRoot, "index.html");
 
-function buildBookmarkletHref(source) {
+function parseDevMaxBooks(value) {
+  if (!value) {
+    return null;
+  }
+
+  const parsedValue = Number.parseInt(value, 10);
+
+  return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : null;
+}
+
+function buildBookmarkletHref(source, options) {
+  const { devMaxBooks } = options;
   const runtimeSource = source.replace(/^export /gm, "").trim();
-  const payload = `(function(){${runtimeSource};runClippingsBookmarklet();})()`;
+  const payload = `(function(){${runtimeSource};runClippingsBookmarklet({ document, fetch, URL, devMaxBooks: ${devMaxBooks ?? "null"} });})()`;
   return `javascript:${encodeURIComponent(payload)}`;
 }
 
 async function main() {
+  const devMaxBooks = parseDevMaxBooks(process.env.DEV_MAX_BOOKS);
   const [template, bookmarkletSource] = await Promise.all([
     readFile(templatePath, "utf8"),
     readFile(bookmarkletPath, "utf8")
   ]);
-  const html = template.replace("__BOOKMARKLET_HREF__", buildBookmarkletHref(bookmarkletSource));
+  const html = template.replace(
+    "__BOOKMARKLET_HREF__",
+    buildBookmarkletHref(bookmarkletSource, { devMaxBooks })
+  );
 
   await mkdir(path.dirname(outputPath), { recursive: true });
   await writeFile(outputPath, html);
