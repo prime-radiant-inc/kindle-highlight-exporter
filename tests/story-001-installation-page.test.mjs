@@ -35,4 +35,5 @@ test("dev build injects the max-book cap into the bookmarklet payload", () => {
   const payload = decodeURIComponent(hrefMatch[1].replace(/^javascript:/, ""));
 
   assert.match(payload, /devMaxBooks:\s*5/);
+  assert.match(payload, /fetchImpl:\s*window\.fetch\.bind\(window\)/);
 });

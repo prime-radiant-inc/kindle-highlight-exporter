@@ -21,7 +21,7 @@ function parseDevMaxBooks(value) {
 function buildBookmarkletHref(source, options) {
   const { devMaxBooks } = options;
   const runtimeSource = source.replace(/^export /gm, "").trim();
-  const payload = `(function(){${runtimeSource};runClippingsBookmarklet({ document, fetch, URL, devMaxBooks: ${devMaxBooks ?? "null"} });})()`;
+  const payload = `(function(){${runtimeSource};runClippingsBookmarklet({ document: window.document, fetchImpl: window.fetch.bind(window), urlApi: window.URL, devMaxBooks: ${devMaxBooks ?? "null"} });})()`;
   return `javascript:${encodeURIComponent(payload)}`;
 }
 
