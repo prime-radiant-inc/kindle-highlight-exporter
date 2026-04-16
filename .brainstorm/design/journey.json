@@ -1,0 +1,25 @@
+{
+  "steps": [
+    {
+      "title": "Install the bookmarklet",
+      "featureIds": [
+        "story-001"
+      ]
+    },
+    {
+      "title": "Run the bookmarklet on Kindle Notebook",
+      "featureIds": [
+        "story-002",
+        "story-003",
+        "story-006"
+      ]
+    },
+    {
+      "title": "Receive the zip download",
+      "featureIds": [
+        "story-004",
+        "story-005"
+      ]
+    }
+  ]
+}

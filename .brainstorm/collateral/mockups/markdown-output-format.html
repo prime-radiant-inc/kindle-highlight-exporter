@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><title>Markdown Output Format — semantic tagging options</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="/vendor/tailwind-browser-4.js" defer></script>
+  <script defer src="/vendor/alpine.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0d1117; color: #e6edf3; }
+    .token-heading { color: #79c0ff; font-weight: bold; }
+    .token-tag { color: #ff7b72; }
+    .token-attr { color: #d2a8ff; }
+    .token-quote { color: #e6edf3; }
+    .token-note { color: #ffa657; }
+    .token-meta { color: #8b949e; }
+    .token-hr { color: #3d444d; }
+    .tab-active { border-bottom: 2px solid #79c0ff; color: #79c0ff; }
+    .tab-inactive { border-bottom: 2px solid transparent; color: #8b949e; }
+  </style>
+</head>
+<body class="p-8 max-w-3xl mx-auto" x-data="{ tab: 'xml' }">
+
+  <p class="text-xs text-gray-500 uppercase tracking-widest mb-4">Format comparison</p>
+
+  <div class="flex gap-6 mb-6 border-b border-gray-700">
+    <button class="pb-2 text-sm font-medium transition-colors" :class="tab === 'xml' ? 'tab-active' : 'tab-inactive'" @click="tab = 'xml'">Option A — Faux-XML tags</button>
+    <button class="pb-2 text-sm font-medium transition-colors" :class="tab === 'yaml' ? 'tab-active' : 'tab-inactive'" @click="tab = 'yaml'">Option B — Labeled fields</button>
+  </div>
+
+  <!-- Option A: Faux XML -->
+  <div x-show="tab === 'xml'">
+    <pre class="bg-gray-900 rounded-lg p-6 text-sm leading-relaxed overflow-x-auto"><code><span class="token-heading"># The Pragmatic Programmer</span>
+
+<span class="token-meta">author: David Thomas, Andrew Hunt
+asin: B07VRS84D1
+last_annotated: 2024-11-03
+highlights: 24
+notes: 6</span>
+
+<span class="token-hr">---</span>
+
+<span class="token-meta">location: 312 | page: 28 | added: 2024-10-15</span>
+
+<span class="token-tag">&lt;highlight&gt;</span>
+<span class="token-quote">Care about your craft. Why spend your life developing software unless you care about doing it well?</span>
+<span class="token-tag">&lt;/highlight&gt;</span>
+
+<span class="token-tag">&lt;note&gt;</span>
+<span class="token-note">This is the core thesis of the whole book. Revisit when feeling demotivated.</span>
+<span class="token-tag">&lt;/note&gt;</span>
+
+<span class="token-hr">---</span>
+
+<span class="token-meta">location: 540 | page: 47 | added: 2024-10-17</span>
+
+<span class="token-tag">&lt;highlight&gt;</span>
+<span class="token-quote">It's your life. You own it. You run it. You create it.</span>
+<span class="token-tag">&lt;/highlight&gt;</span>
+</code></pre>
+    <p class="text-xs text-gray-500 mt-3">Unambiguous to any parser. <code>&lt;highlight&gt;</code> is always the book's words. <code>&lt;note&gt;</code> is always yours. Zero chance of confusion.</p>
+  </div>
+
+  <!-- Option B: Labeled fields -->
+  <div x-show="tab === 'yaml'">
+    <pre class="bg-gray-900 rounded-lg p-6 text-sm leading-relaxed overflow-x-auto"><code><span class="token-heading"># The Pragmatic Programmer</span>
+
+<span class="token-meta">author: David Thomas, Andrew Hunt
+asin: B07VRS84D1
+last_annotated: 2024-11-03
+highlights: 24
+notes: 6</span>
+
+<span class="token-hr">---</span>
+
+<span class="token-meta">location: 312 | page: 28 | added: 2024-10-15</span>
+
+<span class="token-attr">HIGHLIGHT:</span> <span class="token-quote">Care about your craft. Why spend your life developing software unless you care about doing it well?</span>
+
+<span class="token-attr">NOTE:</span> <span class="token-note">This is the core thesis of the whole book. Revisit when feeling demotivated.</span>
+
+<span class="token-hr">---</span>
+
+<span class="token-meta">location: 540 | page: 47 | added: 2024-10-17</span>
+
+<span class="token-attr">HIGHLIGHT:</span> <span class="token-quote">It's your life. You own it. You run it. You create it.</span>
+</code></pre>
+    <p class="text-xs text-gray-500 mt-3">Simpler, still unambiguous. Less noisy for human readers too. Works fine for regex-based parsers, not just LLMs.</p>
+  </div>
+
+</body>
+</html>

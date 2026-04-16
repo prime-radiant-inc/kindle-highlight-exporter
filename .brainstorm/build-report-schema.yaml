@@ -1,0 +1,49 @@
+# Build Report Schema (version 1)
+#
+# After implementation, generate a file named build-report.yaml in the
+# .brainstorm/ directory following this format. The report is the primary
+# deliverable that Brainstorm reads back to track build progress.
+
+version: 1
+
+# Product metadata (copy from spec.md header)
+product:
+  name: "Example App"             # Product name from the spec
+  slug: "example-app"             # Product slug from the spec
+
+# One entry per story from the spec
+#
+# Status values:
+#   done    — implemented (use notes for criteria you couldn't verify)
+#   partial — some criteria implemented, gaps explained in notes
+#   skipped — not implemented, reason in notes
+#   blocked — could not implement due to external blocker
+stories:
+  - id: "story-001"               # Story ID matching the story file
+    status: "done"                 # done | partial | skipped | blocked
+    notes: ""                      # Optional: explanation for partial/skipped/blocked
+    commits:                       # Git commit hashes for this story
+      - "abc1234"
+      - "def5678"
+
+  - id: "story-002"
+    status: "partial"
+    notes: "Auth integration deferred — needs OAuth credentials"
+    commits:
+      - "ghi9012"
+
+  - id: "story-003"
+    status: "skipped"
+    notes: "Depends on third-party API not yet available"
+    commits: []
+
+  - id: "story-004"
+    status: "done"
+    notes: "Glow animation implemented. Visual output not verified — headless."
+    commits:
+      - "jkl3456"
+
+# Optional: summary of the overall build
+summary: |
+  Implemented 8 of 10 stories. Two stories deferred due to
+  external dependencies. All tests passing.

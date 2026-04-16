@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><title>Clippings — Installation Page</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="/vendor/tailwind-browser-4.js" defer></script>
+  <script defer src="/vendor/alpine.js"></script>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; }
+    .bookmarklet-btn {
+      display: inline-block;
+      background: #1a1a2e;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 15px;
+      border: 2px dashed #4f46e5;
+      cursor: grab;
+      text-decoration: none;
+      user-select: none;
+    }
+    .bookmarklet-btn:active { cursor: grabbing; }
+    .step-number {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #4f46e5;
+      color: white;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen" x-data="{ dragged: false, copied: false }">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-200">
+    <div class="max-w-2xl mx-auto px-6 py-4 flex items-center gap-3">
+      <span class="text-xl">📎</span>
+      <span class="font-semibold text-gray-900 text-lg">Clippings</span>
+      <span class="text-gray-400 text-sm ml-1">— Kindle highlights to markdown</span>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <main class="max-w-2xl mx-auto px-6 py-16">
+    <h1 class="text-3xl font-bold text-gray-900 mb-3">Export your Kindle highlights</h1>
+    <p class="text-gray-500 text-lg mb-12">One click on your bookmark bar exports every highlight and note you've ever made — downloaded as markdown files, one per book.</p>
+
+    <!-- Bookmarklet drag target -->
+    <div class="bg-white rounded-xl border-2 border-dashed border-indigo-200 p-8 text-center mb-12"
+         :class="dragged ? 'border-green-400 bg-green-50' : 'border-indigo-200'">
+      <p class="text-sm text-gray-500 mb-5 uppercase tracking-widest font-medium">Step 1 — Drag this to your bookmarks bar</p>
+      <a class="bookmarklet-btn" href="javascript:(function(){alert('Bookmarklet would run here');})()"
+         @dragstart="dragged = true"
+         @dragend="setTimeout(() => dragged = false, 2000)">
+        📎 Export Kindle Highlights
+      </a>
+      <p class="text-xs text-gray-400 mt-5" x-show="!dragged">Drag the button above to your browser's bookmark bar</p>
+      <p class="text-xs text-green-600 font-medium mt-5" x-show="dragged">✓ Bookmarklet installed!</p>
+    </div>
+
+    <!-- Steps -->
+    <div class="space-y-6 mb-12">
+      <div class="flex gap-4 items-start">
+        <div class="step-number">2</div>
+        <div>
+          <p class="font-medium text-gray-900">Open Kindle Notebook</p>
+          <p class="text-gray-500 text-sm mt-0.5">Visit <a href="https://read.amazon.com/notebook" target="_blank" class="text-indigo-600 hover:underline">read.amazon.com/notebook</a> and make sure you're logged in to Amazon.</p>
+        </div>
+      </div>
+      <div class="flex gap-4 items-start">
+        <div class="step-number">3</div>
+        <div>
+          <p class="font-medium text-gray-900">Click the bookmarklet</p>
+          <p class="text-gray-500 text-sm mt-0.5">Click <strong>Export Kindle Highlights</strong> in your bookmark bar. A progress indicator will appear while your highlights are collected.</p>
+        </div>
+      </div>
+      <div class="flex gap-4 items-start">
+        <div class="step-number">4</div>
+        <div>
+          <p class="font-medium text-gray-900">Download your zip</p>
+          <p class="text-gray-500 text-sm mt-0.5">A zip file downloads automatically — one <code class="bg-gray-100 px-1 rounded text-xs">.md</code> file per book, with every highlight and note.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sample output callout -->
+    <div class="bg-gray-900 rounded-lg p-5 text-sm">
+      <p class="text-gray-400 text-xs uppercase tracking-widest mb-3">Each file looks like this</p>
+      <pre class="text-gray-300 leading-relaxed text-xs overflow-x-auto"><code># The Pragmatic Programmer
+author: David Thomas, Andrew Hunt
+asin: B07VRS84D1
+last_annotated: 2024-11-03
+
+---
+
+location: 312 | page: 28 | added: 2024-10-15
+&lt;highlight&gt;
+Care about your craft.
+&lt;/highlight&gt;
+&lt;note&gt;
+Core thesis. Revisit when demotivated.
+&lt;/note&gt;</code></pre>
+    </div>
+  </main>
+
+</body>
+</html>
