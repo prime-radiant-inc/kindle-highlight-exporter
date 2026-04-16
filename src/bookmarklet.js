@@ -16,6 +16,7 @@ const MONTHS = {
   November: "11",
   December: "12"
 };
+const JSZIP_CDN_URL = "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js";
 
 function parseAddedDate(headerText) {
   const match = headerText.match(/Added on \w+ ([A-Za-z]+) (\d{1,2}), (\d{4})/);
@@ -193,6 +194,68 @@ export function buildMarkdownFile(book) {
     name: `${slugifyTitle(book.title)}.md`,
     content: [header, ...sections].join("\n\n---\n\n")
   };
+}
+
+function formatDateForFileName(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+export function loadJsZip(document, runtime = globalThis) {
+  if (runtime.JSZip) {
+    return Promise.resolve(runtime.JSZip);
+  }
+
+  if (runtime.__clippingsJsZipPromise) {
+    return runtime.__clippingsJsZipPromise;
+  }
+
+  runtime.__clippingsJsZipPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = JSZIP_CDN_URL;
+    script.async = true;
+    script.addEventListener("load", () => {
+      if (runtime.JSZip) {
+        resolve(runtime.JSZip);
+        return;
+      }
+
+      delete runtime.__clippingsJsZipPromise;
+      reject(new Error("JSZip failed to load"));
+    });
+    script.addEventListener("error", () => {
+      delete runtime.__clippingsJsZipPromise;
+      reject(new Error("JSZip failed to load"));
+    });
+    (document.head || document.body || document.documentElement).append(script);
+  });
+
+  return runtime.__clippingsJsZipPromise;
+}
+
+export async function downloadZip(books, options) {
+  const { document, exportDate = new Date(), jszipCtor, urlApi = URL } = options;
+  const jszipClass = jszipCtor ?? (await loadJsZip(document, document.defaultView ?? globalThis));
+  const zip = new jszipClass();
+
+  for (const book of books) {
+    const file = buildMarkdownFile(book);
+    zip.file(file.name, file.content);
+  }
+
+  const blob = await zip.generateAsync({ type: "blob" });
+  const downloadUrl = urlApi.createObjectURL(blob);
+  const anchor = document.createElement("a");
+
+  anchor.href = downloadUrl;
+  anchor.download = `kindle-highlights-${formatDateForFileName(exportDate)}.zip`;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  urlApi.revokeObjectURL(downloadUrl);
 }
 
 export function createProgressOverlay(document) {
