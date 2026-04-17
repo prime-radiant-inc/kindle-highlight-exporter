@@ -397,6 +397,13 @@ function buildZipFilePath(book, usedPaths) {
   return candidatePath;
 }
 
+export function buildCombinedMarkdown(books) {
+  return books
+    .filter((book) => book.annotations.length > 0)
+    .map((book) => buildMarkdownFile(book).content)
+    .join("\n\n---\n\n");
+}
+
 export function buildMarkdownFile(book) {
   const highlightsCount = book.annotations.filter((annotation) => annotation.highlight).length;
   const notesCount = book.annotations.filter((annotation) => annotation.note).length;
@@ -509,6 +516,7 @@ export function createProgressOverlay(document) {
   const status = document.createElement("p");
   const count = document.createElement("p");
   const actions = document.createElement("div");
+  const copyButton = document.createElement("button");
   const dismissButton = document.createElement("button");
 
   overlay.dataset.clippingsProgress = "true";
@@ -547,6 +555,23 @@ export function createProgressOverlay(document) {
 
   Object.assign(actions.style, {
     marginTop: "16px",
+    display: "none",
+    flexWrap: "wrap",
+    gap: "8px"
+  });
+
+  copyButton.type = "button";
+  copyButton.textContent = "Copy markdown to clipboard";
+  copyButton.dataset.clippingsCopy = "true";
+  Object.assign(copyButton.style, {
+    border: "0",
+    borderRadius: "999px",
+    padding: "10px 14px",
+    background: "#10b981",
+    color: "#064e3b",
+    font: "inherit",
+    fontWeight: "700",
+    cursor: "pointer",
     display: "none"
   });
 
@@ -564,7 +589,7 @@ export function createProgressOverlay(document) {
   });
   dismissButton.addEventListener("click", () => overlay.remove());
 
-  actions.append(dismissButton);
+  actions.append(copyButton, dismissButton);
   card.append(status, count, actions);
   overlay.append(card);
   document.body.append(overlay);
@@ -574,10 +599,32 @@ export function createProgressOverlay(document) {
       status.textContent = message;
       count.textContent = `${completed} / ${total}`;
       actions.style.display = "none";
+      copyButton.style.display = "none";
     },
     showError(message) {
       status.textContent = message;
-      actions.style.display = "block";
+      actions.style.display = "flex";
+      copyButton.style.display = "none";
+    },
+    showComplete(message, markdown) {
+      status.textContent = message;
+      actions.style.display = "flex";
+      copyButton.style.display = "inline-block";
+      copyButton.textContent = "Copy markdown to clipboard";
+      copyButton.onclick = async () => {
+        const clipboard = document.defaultView?.navigator?.clipboard;
+
+        try {
+          if (clipboard?.writeText) {
+            await clipboard.writeText(markdown);
+            copyButton.textContent = "Copied!";
+          } else {
+            copyButton.textContent = "Clipboard unavailable";
+          }
+        } catch {
+          copyButton.textContent = "Copy failed";
+        }
+      };
     },
     remove() {
       overlay.remove();
@@ -634,7 +681,12 @@ export async function runClippingsBookmarklet(runtime = globalThis) {
       urlApi: runtime.urlApi ?? runtime.URL ?? globalThis.URL
     });
 
-    overlay.remove();
+    const bookCount = result.books.length;
+    const combinedMarkdown = buildCombinedMarkdown(result.books);
+    overlay.showComplete(
+      `Exported ${bookCount} book${bookCount === 1 ? "" : "s"}.`,
+      combinedMarkdown
+    );
 
     return result;
   } catch (error) {
