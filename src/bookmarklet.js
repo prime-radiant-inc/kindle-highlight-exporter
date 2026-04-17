@@ -363,7 +363,7 @@ export function slugifyTitle(title) {
 
 function sanitizePathSegment(value) {
   return (value ?? "")
-    .normalize("NFKD")
+    .normalize("NFC")
     .replace(/[<>:"/\\|?*\u0000-\u001f]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -398,6 +398,7 @@ function buildZipFilePath(book, usedPaths) {
 }
 
 export function buildMarkdownFile(book) {
+  const highlightsCount = book.annotations.filter((annotation) => annotation.highlight).length;
   const notesCount = book.annotations.filter((annotation) => annotation.note).length;
   const header = joinPresentLines([
     `# ${book.title}`,
@@ -405,7 +406,7 @@ export function buildMarkdownFile(book) {
     book.author ? `author: ${book.author}` : "",
     book.asin ? `asin: ${book.asin}` : "",
     book.lastAnnotated ? `last_annotated: ${book.lastAnnotated}` : "",
-    `highlights: ${book.annotations.length}`,
+    `highlights: ${highlightsCount}`,
     `notes: ${notesCount}`
   ]);
   const sections = book.annotations.map((annotation) =>
@@ -417,9 +418,9 @@ export function buildMarkdownFile(book) {
       ]
         .filter(Boolean)
         .join(" | "),
-      "<highlight>",
-      annotation.highlight,
-      "</highlight>",
+      annotation.highlight ? "<highlight>" : "",
+      annotation.highlight ?? "",
+      annotation.highlight ? "</highlight>" : "",
       annotation.note ? "<note>" : "",
       annotation.note ?? "",
       annotation.note ? "</note>" : ""
@@ -479,6 +480,10 @@ export async function downloadZip(books, options) {
   const usedPaths = new Set();
 
   for (const book of books) {
+    if (!book.annotations.length) {
+      continue;
+    }
+
     const file = buildMarkdownFile(book);
     const filePath = buildZipFilePath(book, usedPaths);
 

@@ -56,7 +56,7 @@ test("buildMarkdownFile omits empty highlight blocks for note-only annotations",
     ]
   });
 
-  assert.match(file.content, /^highlights: 1$/m);
+  assert.match(file.content, /^highlights: 0$/m);
   assert.match(file.content, /^notes: 1$/m);
   assert.match(file.content, /location: 4246/);
   assert.match(file.content, /<note>\nthis is a fragment\n<\/note>/);
