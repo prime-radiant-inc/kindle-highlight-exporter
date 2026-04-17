@@ -3,9 +3,14 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
+test.after(() => {
+  execFileSync("node", ["scripts/build.mjs"]);
+});
+
 test("build writes a static installation page with a bookmarklet link", () => {
   execFileSync("node", ["scripts/build.mjs"]);
   const html = readFileSync("index.html", "utf8");
+  const hrefMatch = html.match(/href="([^"]+)"/);
 
   assert.match(html, /Clippings/);
   assert.match(html, /Kindle highlights to markdown/);
@@ -18,6 +23,8 @@ test("build writes a static installation page with a bookmarklet link", () => {
   assert.match(html, /Download your zip/);
   assert.match(html, /&lt;highlight&gt;/);
   assert.match(html, /&lt;note&gt;/);
+  assert.ok(hrefMatch);
+  assert.match(decodeURIComponent(hrefMatch[1].replace(/^javascript:/, "")), /devMaxBooks:\s*null/);
 });
 
 test("dev build injects the max-book cap into the bookmarklet payload", () => {
