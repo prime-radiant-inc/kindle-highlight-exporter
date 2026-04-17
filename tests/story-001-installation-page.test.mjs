@@ -14,7 +14,7 @@ test("build writes a static installation page with a bookmarklet link", () => {
 
   assert.match(html, /Prime Radiant/);
   assert.match(html, /Kindle Highlight Exporter/);
-  assert.match(html, /A Prime Radiant utility/);
+  assert.match(html, /Export your Kindle highlights\./);
   assert.match(html, /Export Kindle Highlights/);
   assert.match(html, /href="javascript:/);
   assert.match(html, /draggable="true"/);
@@ -27,6 +27,8 @@ test("build writes a static installation page with a bookmarklet link", () => {
   assert.match(html, /static\/brand\/logo-horizontal\.png/);
   assert.match(html, /static\/brand\/favicon\.svg/);
   assert.match(html, /Copyright 2026 Prime Radiant/);
+  assert.match(html, /https:\/\/github\.com\/prime-radiant-inc\/kindle-highlight-exporter/);
+  assert.doesNotMatch(html, /A Prime Radiant utility/);
   assert.ok(hrefMatch);
   assert.match(decodeURIComponent(hrefMatch[1].replace(/^javascript:/, "")), /devMaxBooks:\s*null/);
 });
