@@ -30,7 +30,7 @@ test("createProgressOverlay renders progress, errors, and cleanup controls", () 
 
   overlay.showError("Skipped Deep Work");
 
-  const dismissButton = root.querySelector("button:not([data-clippings-copy])");
+  const dismissButton = root.querySelector("[data-clippings-dismiss]");
   assert.match(root.textContent, /Skipped Deep Work/);
   assert.equal(dismissButton?.textContent, "Dismiss");
 
@@ -114,15 +114,24 @@ test("runClippingsBookmarklet exports books and removes the overlay on success",
 
   assert.equal(result.books.length, 3);
   assert.deepEqual(result.errors, []);
-  assert.equal(clicks[0].download, "kindle-highlights-2026-04-16.zip");
+  assert.equal(clicks.length, 0);
 
   const overlay = document.querySelector("[data-clippings-progress]");
   assert.ok(overlay);
-  assert.match(overlay.textContent, /Exported 3 books\./);
+  assert.match(overlay.textContent, /Found 3 books\./);
+
+  const downloadButton = overlay.querySelector("[data-clippings-download]");
+  assert.ok(downloadButton);
+  assert.equal(downloadButton.textContent, "Download zip");
+
+  await downloadButton.onclick();
+
+  assert.equal(clicks[0].download, "kindle-highlights-2026-04-16.zip");
+  assert.equal(downloadButton.textContent, "Downloaded");
 
   const copyButton = overlay.querySelector("[data-clippings-copy]");
   assert.ok(copyButton);
-  assert.equal(copyButton.textContent, "Copy markdown to clipboard");
+  assert.equal(copyButton.textContent, "Copy markdown");
 
   const clipboardWrites = [];
   Object.defineProperty(window.navigator, "clipboard", {
@@ -154,7 +163,7 @@ test("runClippingsBookmarklet exports books and removes the overlay on success",
   assert.match(FakeJsZip.instances[0].files[0].content, /Care about your craft\./);
   assert.match(FakeJsZip.instances[0].files[0].content, /Core thesis\. Revisit when motivation dips\./);
 
-  overlay.querySelector("button:not([data-clippings-copy])").click();
+  overlay.querySelector("[data-clippings-dismiss]").click();
   assert.equal(document.querySelector("[data-clippings-progress]"), null);
 });
 
@@ -194,7 +203,7 @@ test("runClippingsBookmarklet leaves the overlay visible with an error when ever
   assert.ok(overlay);
   assert.match(overlay.textContent, /Request failed/);
   assert.equal(
-    overlay.querySelector("button:not([data-clippings-copy])")?.textContent,
+    overlay.querySelector("[data-clippings-dismiss]")?.textContent,
     "Dismiss"
   );
 });
@@ -248,6 +257,9 @@ test("runClippingsBookmarklet respects a dev max-book cap", async () => {
       revokeObjectURL() {}
     }
   });
+
+  const overlay = document.querySelector("[data-clippings-progress]");
+  await overlay.querySelector("[data-clippings-download]").onclick();
 
   assert.deepEqual(
     FakeJsZip.instances[0].files.map((file) => file.name),

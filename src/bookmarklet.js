@@ -516,6 +516,7 @@ export function createProgressOverlay(document) {
   const status = document.createElement("p");
   const count = document.createElement("p");
   const actions = document.createElement("div");
+  const downloadButton = document.createElement("button");
   const copyButton = document.createElement("button");
   const dismissButton = document.createElement("button");
 
@@ -557,39 +558,50 @@ export function createProgressOverlay(document) {
     marginTop: "16px",
     display: "none",
     flexWrap: "wrap",
-    gap: "8px"
+    gap: "6px"
+  });
+
+  const baseButtonStyle = {
+    border: "0",
+    borderRadius: "999px",
+    padding: "6px 12px",
+    font: "inherit",
+    fontSize: "13px",
+    fontWeight: "700",
+    cursor: "pointer"
+  };
+
+  downloadButton.type = "button";
+  downloadButton.textContent = "Download zip";
+  downloadButton.dataset.clippingsDownload = "true";
+  Object.assign(downloadButton.style, {
+    ...baseButtonStyle,
+    background: "#3b82f6",
+    color: "#0b1f4a",
+    display: "none"
   });
 
   copyButton.type = "button";
-  copyButton.textContent = "Copy markdown to clipboard";
+  copyButton.textContent = "Copy markdown";
   copyButton.dataset.clippingsCopy = "true";
   Object.assign(copyButton.style, {
-    border: "0",
-    borderRadius: "999px",
-    padding: "10px 14px",
+    ...baseButtonStyle,
     background: "#10b981",
     color: "#064e3b",
-    font: "inherit",
-    fontWeight: "700",
-    cursor: "pointer",
     display: "none"
   });
 
   dismissButton.type = "button";
   dismissButton.textContent = "Dismiss";
+  dismissButton.dataset.clippingsDismiss = "true";
   Object.assign(dismissButton.style, {
-    border: "0",
-    borderRadius: "999px",
-    padding: "10px 14px",
+    ...baseButtonStyle,
     background: "#f59e0b",
-    color: "#111827",
-    font: "inherit",
-    fontWeight: "700",
-    cursor: "pointer"
+    color: "#111827"
   });
   dismissButton.addEventListener("click", () => overlay.remove());
 
-  actions.append(copyButton, dismissButton);
+  actions.append(downloadButton, copyButton, dismissButton);
   card.append(status, count, actions);
   overlay.append(card);
   document.body.append(overlay);
@@ -599,18 +611,34 @@ export function createProgressOverlay(document) {
       status.textContent = message;
       count.textContent = `${completed} / ${total}`;
       actions.style.display = "none";
+      downloadButton.style.display = "none";
       copyButton.style.display = "none";
     },
     showError(message) {
       status.textContent = message;
       actions.style.display = "flex";
+      downloadButton.style.display = "none";
       copyButton.style.display = "none";
     },
-    showComplete(message, markdown) {
+    showComplete(message, { markdown, onDownload }) {
       status.textContent = message;
       actions.style.display = "flex";
+      downloadButton.style.display = "inline-block";
+      downloadButton.disabled = false;
+      downloadButton.textContent = "Download zip";
+      downloadButton.onclick = async () => {
+        downloadButton.disabled = true;
+        downloadButton.textContent = "Preparing...";
+        try {
+          await onDownload();
+          downloadButton.textContent = "Downloaded";
+        } catch (error) {
+          downloadButton.textContent = "Download failed";
+          downloadButton.disabled = false;
+        }
+      };
       copyButton.style.display = "inline-block";
-      copyButton.textContent = "Copy markdown to clipboard";
+      copyButton.textContent = "Copy markdown";
       copyButton.onclick = async () => {
         const clipboard = document.defaultView?.navigator?.clipboard;
 
@@ -672,20 +700,20 @@ export async function runClippingsBookmarklet(runtime = globalThis) {
       return result;
     }
 
-    overlay.update("Preparing download...", result.books.length, result.books.length);
-
-    await downloadZip(result.books, {
-      document,
-      exportDate: runtime.exportDate,
-      jszipCtor: runtime.jszipCtor,
-      urlApi: runtime.urlApi ?? runtime.URL ?? globalThis.URL
-    });
-
     const bookCount = result.books.length;
     const combinedMarkdown = buildCombinedMarkdown(result.books);
     overlay.showComplete(
-      `Exported ${bookCount} book${bookCount === 1 ? "" : "s"}.`,
-      combinedMarkdown
+      `Found ${bookCount} book${bookCount === 1 ? "" : "s"}.`,
+      {
+        markdown: combinedMarkdown,
+        onDownload: () =>
+          downloadZip(result.books, {
+            document,
+            exportDate: runtime.exportDate,
+            jszipCtor: runtime.jszipCtor,
+            urlApi: runtime.urlApi ?? runtime.URL ?? globalThis.URL
+          })
+      }
     );
 
     return result;
