@@ -148,10 +148,39 @@
         cursor: grabbing;
       }
 
+      .bookmarklet-copy {
+        display: inline-block;
+        padding: 0.95rem 1.4rem;
+        border: 2px dashed rgba(115, 48, 29, 0.45);
+        border-radius: 999px;
+        background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
+        color: #fff8f1;
+        font-family: inherit;
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        cursor: pointer;
+      }
+
+      .bookmarklet-copy:hover {
+        filter: brightness(1.05);
+      }
+
       .install-help {
         margin: 1rem 0 0;
         color: var(--muted);
         font-size: 0.95rem;
+      }
+
+      .ios-steps {
+        margin: 1.25rem 0 0;
+        padding-left: 1.25rem;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .ios-steps li + li {
+        margin-top: 0.55rem;
       }
 
       .steps {
@@ -287,6 +316,17 @@
           </p>
         </section>
 
+        <section class="install-panel">
+          <p class="install-label">Or install on iPhone or iPad</p>
+          <button class="bookmarklet-copy" type="button" data-copy-bookmarklet>Copy bookmarklet code</button>
+          <ol class="ios-steps">
+            <li>Tap <strong>Copy bookmarklet code</strong> above.</li>
+            <li>In Safari, bookmark any page (Share &rarr; Add Bookmark) and save it.</li>
+            <li>Open Bookmarks, tap <em>Edit</em>, open the new bookmark, replace its URL with the copied text, and rename it to <em>Export Kindle Highlights</em>.</li>
+            <li>Visit <a href="https://read.amazon.com/notebook" target="_blank" rel="noreferrer">read.amazon.com/notebook</a>, then tap the bookmark from the bookmarks menu.</li>
+          </ol>
+        </section>
+
         <section class="steps">
           <ol start="2">
             <li>
@@ -336,5 +376,49 @@ Core thesis. Revisit when motivation dips.
         </div>
       </footer>
     </div>
+    <script>
+      (function () {
+        const button = document.querySelector("[data-copy-bookmarklet]");
+        const link = document.querySelector(".bookmarklet");
+        if (!button || !link) return;
+        const original = button.textContent;
+        let resetTimer = null;
+        const flash = (message) => {
+          button.textContent = message;
+          if (resetTimer) clearTimeout(resetTimer);
+          resetTimer = setTimeout(() => { button.textContent = original; }, 1800);
+        };
+        const legacyCopy = (code) => {
+          const textarea = document.createElement("textarea");
+          textarea.value = code;
+          textarea.setAttribute("readonly", "");
+          textarea.style.position = "fixed";
+          textarea.style.opacity = "0";
+          document.body.append(textarea);
+          textarea.select();
+          let ok = false;
+          try {
+            ok = document.execCommand("copy");
+          } catch (error) {
+            ok = false;
+          }
+          textarea.remove();
+          return ok;
+        };
+        button.addEventListener("click", async () => {
+          const code = link.getAttribute("href");
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              await navigator.clipboard.writeText(code);
+              flash("Copied!");
+              return;
+            }
+          } catch (error) {
+            // fall through to legacy fallback
+          }
+          flash(legacyCopy(code) ? "Copied!" : "Copy failed");
+        });
+      })();
+    </script>
   </body>
 </html>
