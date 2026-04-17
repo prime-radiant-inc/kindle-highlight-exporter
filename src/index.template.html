@@ -5,60 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kindle Highlight Exporter | Prime Radiant</title>
     <link rel="icon" type="image/svg+xml" href="static/brand/favicon.svg">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
       :root {
-        color-scheme: dark;
-        --bg: #0a0e17;
-        --bg-deep: #060910;
-        --panel: rgba(13, 20, 34, 0.82);
-        --panel-strong: rgba(10, 17, 29, 0.94);
-        --panel-border: rgba(91, 163, 163, 0.18);
-        --panel-glow: rgba(91, 163, 163, 0.12);
-        --text: #e8f0f8;
-        --muted: #9fb0c2;
-        --muted-strong: #c8d6e5;
-        --teal: #5ba3a3;
-        --teal-bright: #7ec8c8;
-        --teal-wash: rgba(91, 163, 163, 0.14);
-        --sample: #09111d;
-        --sample-border: rgba(126, 200, 200, 0.12);
+        color-scheme: light;
+        --page: #f6f2ea;
+        --surface: rgba(255, 253, 250, 0.92);
+        --surface-border: rgba(35, 27, 18, 0.08);
+        --text: #231b12;
+        --muted: #695845;
+        --accent: #9d472f;
+        --accent-strong: #73301d;
+        --sample: #1c1713;
+        --sample-text: #f8f2e9;
       }
 
       * {
         box-sizing: border-box;
       }
 
-      html {
-        background: var(--bg);
-      }
-
       body {
         margin: 0;
-        font-family: "Merriweather Sans", sans-serif;
-        color: var(--text);
+        font-family: Georgia, "Times New Roman", serif;
         background:
-          radial-gradient(circle at 15% 20%, rgba(91, 163, 163, 0.12), transparent 28rem),
-          radial-gradient(circle at 80% 0%, rgba(53, 93, 152, 0.16), transparent 26rem),
-          radial-gradient(circle at 50% 100%, rgba(91, 163, 163, 0.08), transparent 30rem),
-          linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
-      }
-
-      body::before {
-        content: "";
-        position: fixed;
-        inset: 0;
-        pointer-events: none;
-        background-image:
-          radial-gradient(circle at 14% 18%, rgba(232, 240, 248, 0.75) 0 1px, transparent 1.5px),
-          radial-gradient(circle at 81% 12%, rgba(126, 200, 200, 0.6) 0 1px, transparent 1.5px),
-          radial-gradient(circle at 28% 42%, rgba(232, 240, 248, 0.45) 0 1px, transparent 1.5px),
-          radial-gradient(circle at 70% 58%, rgba(232, 240, 248, 0.4) 0 1px, transparent 1.5px),
-          radial-gradient(circle at 41% 78%, rgba(126, 200, 200, 0.45) 0 1px, transparent 1.5px),
-          radial-gradient(circle at 88% 82%, rgba(232, 240, 248, 0.55) 0 1px, transparent 1.5px);
-        opacity: 0.55;
+          radial-gradient(circle at top left, rgba(157, 71, 47, 0.12), transparent 32rem),
+          linear-gradient(180deg, #fbf8f2 0%, var(--page) 100%);
+        color: var(--text);
       }
 
       a {
@@ -66,186 +37,115 @@
       }
 
       .shell {
-        position: relative;
         min-height: 100vh;
       }
 
       .header {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        backdrop-filter: blur(16px);
-        background: rgba(10, 14, 23, 0.82);
-        border-bottom: 1px solid rgba(91, 163, 163, 0.12);
+        border-bottom: 1px solid rgba(35, 27, 18, 0.08);
+        background: rgba(255, 253, 250, 0.86);
+        backdrop-filter: blur(12px);
       }
 
       .header-inner,
       .content,
       .footer {
-        width: min(70rem, calc(100% - 2rem));
+        width: min(56rem, calc(100% - 2rem));
         margin: 0 auto;
       }
 
       .header-inner {
         display: flex;
-        align-items: center;
-        justify-content: space-between;
         gap: 1rem;
-        padding: 1rem 0;
+        align-items: center;
+        padding: 1.1rem 0;
       }
 
       .wordmark {
         display: inline-flex;
         align-items: center;
+        flex-shrink: 0;
       }
 
       .wordmark img {
         display: block;
-        height: 1.6rem;
+        height: 1.2rem;
       }
 
-      .utility-tag {
-        padding: 0.35rem 0.7rem;
-        border: 1px solid var(--panel-border);
-        border-radius: 999px;
-        background: rgba(91, 163, 163, 0.08);
-        color: var(--teal-bright);
-        font-size: 0.72rem;
-        font-weight: 600;
-        letter-spacing: 0.08em;
+      .brand-copy {
+        display: grid;
+        gap: 0.15rem;
+      }
+
+      .brand {
+        margin: 0;
+        font-size: 1.15rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
         text-transform: uppercase;
+      }
+
+      .tagline {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.95rem;
       }
 
       .content {
-        padding: 4.5rem 0 4rem;
+        padding: 4rem 0 5rem;
       }
 
       .hero {
-        display: grid;
-        grid-template-columns: minmax(0, 1.6fr) minmax(17rem, 0.9fr);
-        gap: 1.5rem;
-        margin-bottom: 1.5rem;
-      }
-
-      .hero-copy {
-        padding: 2rem 2.1rem;
-        border: 1px solid var(--panel-border);
-        border-radius: 1.75rem;
-        background: linear-gradient(180deg, rgba(13, 20, 34, 0.92), rgba(8, 13, 23, 0.92));
-        box-shadow: 0 22px 80px rgba(0, 0, 0, 0.32);
-      }
-
-      .eyebrow {
-        margin: 0 0 1rem;
-        color: var(--teal-bright);
-        font-size: 0.76rem;
-        font-weight: 700;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
+        margin-bottom: 2rem;
       }
 
       .hero h1 {
-        margin: 0 0 1rem;
-        font-size: clamp(2.7rem, 6.8vw, 4.75rem);
-        line-height: 0.96;
-        letter-spacing: -0.04em;
+        margin: 0 0 0.75rem;
+        font-size: clamp(2.6rem, 7vw, 4.5rem);
+        line-height: 0.95;
       }
 
       .hero p {
         margin: 0;
         max-width: 42rem;
         color: var(--muted);
-        font-size: 1.06rem;
-        line-height: 1.7;
-      }
-
-      .hero-side {
-        display: grid;
-        gap: 1rem;
-      }
-
-      .meta-card,
-      .install-panel,
-      .steps,
-      .sample {
-        border: 1px solid var(--panel-border);
-        border-radius: 1.5rem;
-        background: var(--panel);
-        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.22);
-      }
-
-      .meta-card {
-        padding: 1.35rem 1.4rem;
-      }
-
-      .meta-card strong {
-        display: block;
-        margin-bottom: 0.4rem;
-        font-size: 0.92rem;
-        color: var(--text);
-      }
-
-      .meta-card span {
-        color: var(--muted);
-        font-size: 0.92rem;
+        font-size: 1.15rem;
         line-height: 1.6;
       }
 
-      .grid {
-        display: grid;
-        grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
-        gap: 1.5rem;
+      .install-panel,
+      .steps,
+      .sample {
+        background: var(--surface);
+        border: 1px solid var(--surface-border);
+        border-radius: 1.5rem;
+        box-shadow: 0 20px 60px rgba(76, 48, 20, 0.08);
       }
 
       .install-panel {
-        padding: 1.8rem;
-        background:
-          linear-gradient(180deg, rgba(13, 20, 34, 0.96), rgba(8, 13, 23, 0.96)),
-          linear-gradient(180deg, rgba(91, 163, 163, 0.06), transparent);
+        padding: 2rem;
+        margin-bottom: 1.5rem;
       }
 
-      .section-label {
-        margin: 0 0 0.9rem;
-        color: var(--teal-bright);
-        font-size: 0.76rem;
+      .install-label,
+      .sample-label {
+        margin: 0 0 1rem;
+        color: var(--muted);
+        font-size: 0.8rem;
         font-weight: 700;
-        letter-spacing: 0.12em;
+        letter-spacing: 0.2em;
         text-transform: uppercase;
       }
 
-      .install-panel h2,
-      .steps h2,
-      .sample h2 {
-        margin: 0 0 0.65rem;
-        font-size: 1.45rem;
-        font-weight: 600;
-        letter-spacing: -0.03em;
-      }
-
-      .install-panel p,
-      .steps p,
-      .sample p {
-        color: var(--muted);
-        line-height: 1.7;
-      }
-
       .bookmarklet {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        margin-top: 1.25rem;
-        padding: 1rem 1.4rem;
-        border: 1px solid rgba(126, 200, 200, 0.28);
+        display: inline-block;
+        padding: 0.95rem 1.4rem;
+        border: 2px dashed rgba(115, 48, 29, 0.45);
         border-radius: 999px;
-        background: linear-gradient(180deg, rgba(91, 163, 163, 0.24), rgba(91, 163, 163, 0.14));
-        box-shadow:
-          inset 0 1px 0 rgba(255, 255, 255, 0.08),
-          0 0 0 1px rgba(91, 163, 163, 0.08),
-          0 18px 38px rgba(15, 43, 59, 0.26);
-        color: #f7fbff;
+        background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
+        color: #fff8f1;
         font-size: 1rem;
         font-weight: 700;
-        letter-spacing: 0.01em;
+        letter-spacing: 0.02em;
         text-decoration: none;
         cursor: grab;
         user-select: none;
@@ -257,15 +157,18 @@
 
       .install-help {
         margin: 1rem 0 0;
+        color: var(--muted);
+        font-size: 0.95rem;
       }
 
       .steps {
-        padding: 1.7rem 1.8rem;
+        padding: 1.75rem 2rem;
+        margin: 0 0 1.5rem;
       }
 
       .steps ol {
-        margin: 1rem 0 0;
-        padding-left: 1.25rem;
+        margin: 0;
+        padding-left: 1.5rem;
       }
 
       .steps li + li {
@@ -275,43 +178,43 @@
       .steps strong {
         display: block;
         margin-bottom: 0.25rem;
-        color: var(--text);
-        font-size: 1rem;
+        font-size: 1.05rem;
       }
 
       .steps span {
         color: var(--muted);
-        line-height: 1.65;
+        line-height: 1.6;
       }
 
       .sample {
-        padding: 1.7rem 1.8rem;
+        padding: 1.5rem;
       }
 
       .sample-intro {
-        margin-bottom: 1rem;
+        margin: 0 0 0.9rem;
+        color: var(--muted);
+        line-height: 1.6;
       }
 
       .sample-path {
         display: inline-block;
-        margin-top: 0.4rem;
-        padding: 0.45rem 0.65rem;
+        margin-top: 0.55rem;
+        padding: 0.45rem 0.7rem;
         border-radius: 0.75rem;
-        background: rgba(91, 163, 163, 0.08);
-        color: var(--muted-strong);
+        background: rgba(157, 71, 47, 0.08);
+        color: var(--text);
         font-size: 0.88rem;
       }
 
       pre {
         margin: 0;
-        padding: 1.35rem;
+        padding: 1.4rem;
         overflow-x: auto;
-        border: 1px solid var(--sample-border);
         border-radius: 1rem;
         background: var(--sample);
-        color: #d7e6f5;
+        color: var(--sample-text);
         font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-        font-size: 0.88rem;
+        font-size: 0.9rem;
         line-height: 1.7;
       }
 
@@ -329,30 +232,14 @@
         justify-content: space-between;
         gap: 1rem;
         padding-top: 1.25rem;
-        border-top: 1px solid rgba(91, 163, 163, 0.12);
+        border-top: 1px solid rgba(35, 27, 18, 0.08);
         color: var(--muted);
-        font-size: 0.86rem;
+        font-size: 0.9rem;
       }
 
       .footer a {
-        color: var(--teal-bright);
+        color: var(--accent-strong);
         text-decoration: none;
-      }
-
-      @media (max-width: 56rem) {
-        .hero,
-        .grid {
-          grid-template-columns: 1fr;
-        }
-
-        .hero-copy,
-        .install-panel,
-        .steps,
-        .sample,
-        .meta-card {
-          padding-left: 1.35rem;
-          padding-right: 1.35rem;
-        }
       }
 
       @media (max-width: 42rem) {
@@ -363,11 +250,14 @@
         }
 
         .content {
-          padding-top: 2.4rem;
+          padding-top: 2.5rem;
         }
 
-        .hero h1 {
-          line-height: 1;
+        .install-panel,
+        .steps,
+        .sample {
+          padding-left: 1.2rem;
+          padding-right: 1.2rem;
         }
       }
     </style>
@@ -379,73 +269,51 @@
           <a class="wordmark" href="https://primeradiant.com/" target="_blank" rel="noreferrer">
             <img src="static/brand/logo-horizontal.png" alt="Prime Radiant">
           </a>
-          <span class="utility-tag">A Prime Radiant utility</span>
+          <div class="brand-copy">
+            <p class="brand">Kindle Highlight Exporter</p>
+            <p class="tagline">Kindle highlights to markdown</p>
+          </div>
         </div>
       </header>
 
       <main class="content">
         <section class="hero">
-          <div class="hero-copy">
-            <p class="eyebrow">Kindle Highlight Exporter</p>
-            <h1>Export your Kindle highlights without the usual mess.</h1>
-            <p>
-              Drag one bookmarklet into your bookmarks bar, open Kindle Notebook,
-              and download a local ZIP of markdown files organized by author. No
-              backend. No account. No syncing service. Just your highlights and
-              notes in plain text.
-            </p>
-          </div>
-
-          <div class="hero-side">
-            <div class="meta-card">
-              <strong>What you get</strong>
-              <span>One markdown file per book, with notes and highlights preserved and ZIP paths under `kindle-highlights/&lt;author&gt;/...`.</span>
-            </div>
-            <div class="meta-card">
-              <strong>How it runs</strong>
-              <span>The bookmarklet runs in your browser session against Kindle Notebook and builds the ZIP locally before downloading it.</span>
-            </div>
-          </div>
+          <h1>Export your Kindle highlights.</h1>
+          <p>
+            One bookmarklet click on Kindle Notebook downloads every highlight and note you
+            have into tidy markdown files, one book per file, grouped by author and ready for
+            local tools and plain text workflows.
+          </p>
         </section>
 
-        <section class="grid">
-          <div class="install-panel">
-            <p class="section-label">Step 1</p>
-            <h2>Drag this into your bookmarks bar.</h2>
-            <p>
-              Install the bookmarklet once, then use it from Kindle Notebook any
-              time you want a fresh export.
-            </p>
-            <a class="bookmarklet" href="__BOOKMARKLET_HREF__" draggable="true">Export Kindle Highlights</a>
-            <p class="install-help">
-              Keep the button in your bookmarks bar so you can launch the export
-              directly from Kindle Notebook.
-            </p>
-          </div>
+        <section class="install-panel">
+          <p class="install-label">Step 1 - Drag this into your bookmarks bar</p>
+          <a class="bookmarklet" href="__BOOKMARKLET_HREF__" draggable="true">Export Kindle Highlights</a>
+          <p class="install-help">
+            Keep the button in your browser bookmarks bar so you can run the export from
+            Kindle Notebook.
+          </p>
+        </section>
 
-          <div class="steps">
-            <p class="section-label">Steps 2-4</p>
-            <h2>Run the export.</h2>
-            <ol start="2">
-              <li>
-                <strong>Open Kindle Notebook</strong>
-                <span>Visit <a href="https://read.amazon.com/notebook" target="_blank" rel="noreferrer">read.amazon.com/notebook</a> while logged in to Amazon.</span>
-              </li>
-              <li>
-                <strong>Click the bookmarklet</strong>
-                <span>Use <em>Export Kindle Highlights</em> from your bookmarks bar to start the scrape and export flow.</span>
-              </li>
-              <li>
-                <strong>Download your zip</strong>
-                <span>A ZIP file downloads automatically with one markdown file per book, grouped by author.</span>
-              </li>
-            </ol>
-          </div>
+        <section class="steps">
+          <ol start="2">
+            <li>
+              <strong>Open Kindle Notebook</strong>
+              <span>Visit <a href="https://read.amazon.com/notebook" target="_blank" rel="noreferrer">read.amazon.com/notebook</a> while logged in to Amazon.</span>
+            </li>
+            <li>
+              <strong>Click the bookmarklet</strong>
+              <span>Use <em>Export Kindle Highlights</em> from your bookmarks bar to start the scrape and export flow.</span>
+            </li>
+            <li>
+              <strong>Download your zip</strong>
+              <span>A ZIP file downloads automatically with one markdown file per book.</span>
+            </li>
+          </ol>
         </section>
 
         <section class="sample">
-          <p class="section-label">Sample Output</p>
-          <h2>Markdown that is actually usable.</h2>
+          <p class="sample-label">Sample markdown output</p>
           <p class="sample-intro">
             The archive keeps a predictable directory structure:
             <span class="sample-path">kindle-highlights/David Thomas, Andrew Hunt/the-pragmatic-programmer.md</span>
@@ -472,7 +340,7 @@ Core thesis. Revisit when motivation dips.
       <footer class="footer">
         <div class="footer-inner">
           <span>Copyright 2026 Prime Radiant</span>
-          <a href="https://github.com/prime-radiant-inc" target="_blank" rel="noreferrer">Prime Radiant on GitHub</a>
+          <a href="https://github.com/prime-radiant-inc/kindle-highlight-exporter" target="_blank" rel="noreferrer">View the repository</a>
         </div>
       </footer>
     </div>
