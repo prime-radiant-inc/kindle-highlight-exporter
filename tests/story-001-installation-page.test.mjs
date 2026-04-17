@@ -24,7 +24,7 @@ test("build writes a static installation page with a bookmarklet link", () => {
   assert.match(html, /Download your zip/);
   assert.match(html, /&lt;highlight&gt;/);
   assert.match(html, /&lt;note&gt;/);
-  assert.match(html, /static\/brand\/logo-horizontal\.png/);
+  assert.match(html, /static\/brand\/logo-horizontal-light\.png/);
   assert.match(html, /static\/brand\/favicon\.svg/);
   assert.match(html, /Copyright 2026 Prime Radiant/);
   assert.match(html, /https:\/\/github\.com\/prime-radiant-inc\/kindle-highlight-exporter/);
