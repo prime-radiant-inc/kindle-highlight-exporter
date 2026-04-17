@@ -28,7 +28,7 @@ test("loadJsZip injects the CDN script once and resolves the constructor", async
   assert.equal(await secondPromise, FakeJsZip);
 });
 
-test("downloadZip adds markdown files at the zip root and triggers download", async () => {
+test("downloadZip writes markdown files under kindle-highlights author folders and triggers download", async () => {
   const window = new JSDOM("<!DOCTYPE html><html><body></body></html>").window;
   const { document } = window;
   const clicks = [];
@@ -103,10 +103,78 @@ test("downloadZip adds markdown files at the zip root and triggers download", as
 
   assert.deepEqual(
     FakeJsZip.instances[0].files.map((file) => file.name),
-    ["the-pragmatic-programmer.md", "deep-work.md"]
+    [
+      "kindle-highlights/David Thomas, Andrew Hunt/the-pragmatic-programmer.md",
+      "kindle-highlights/Cal Newport/deep-work.md"
+    ]
   );
   assert.equal(clicks[0].download, "kindle-highlights-2026-04-16.zip");
   assert.equal(clicks[0].href, "blob:clippings");
   assert.equal(createObjectUrlCalls.length, 1);
   assert.deepEqual(revokeObjectUrlCalls, ["blob:clippings"]);
+});
+
+test("downloadZip falls back to Unknown Author and appends the ASIN when file paths collide", async () => {
+  const window = new JSDOM("<!DOCTYPE html><html><body></body></html>").window;
+  const { document } = window;
+
+  class FakeJsZip {
+    static instances = [];
+
+    constructor() {
+      this.files = [];
+      FakeJsZip.instances.push(this);
+    }
+
+    file(name, content) {
+      this.files.push({ name, content });
+    }
+
+    async generateAsync() {
+      return new Blob(["zip"]);
+    }
+  }
+
+  await bookmarklet.downloadZip(
+    [
+      {
+        title: "Shared Title",
+        author: "Shared Author",
+        asin: "B000000001",
+        annotations: []
+      },
+      {
+        title: "Shared Title",
+        author: "Shared Author",
+        asin: "B000000002",
+        annotations: []
+      },
+      {
+        title: "Untitled Notes",
+        author: "",
+        asin: "B000000003",
+        annotations: []
+      }
+    ],
+    {
+      document,
+      exportDate: new Date("2026-04-16T12:00:00Z"),
+      jszipCtor: FakeJsZip,
+      urlApi: {
+        createObjectURL() {
+          return "blob:clippings";
+        },
+        revokeObjectURL() {}
+      }
+    }
+  );
+
+  assert.deepEqual(
+    FakeJsZip.instances[0].files.map((file) => file.name),
+    [
+      "kindle-highlights/Shared Author/shared-title.md",
+      "kindle-highlights/Shared Author/shared-title-B000000002.md",
+      "kindle-highlights/Unknown Author/untitled-notes.md"
+    ]
+  );
 });

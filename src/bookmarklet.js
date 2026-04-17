@@ -296,6 +296,42 @@ export function slugifyTitle(title) {
     .replace(/^-+|-+$/g, "");
 }
 
+function sanitizePathSegment(value) {
+  return (value ?? "")
+    .normalize("NFKD")
+    .replace(/[<>:"/\\|?*\u0000-\u001f]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getBookFileName(book) {
+  const slug = slugifyTitle(book.title);
+
+  return `${slug || "untitled"}.md`;
+}
+
+function buildZipFilePath(book, usedPaths) {
+  const authorFolder = sanitizePathSegment(book.author) || "Unknown Author";
+  const baseName = getBookFileName(book);
+  const basePath = `kindle-highlights/${authorFolder}/${baseName}`;
+
+  if (!usedPaths.has(basePath)) {
+    return basePath;
+  }
+
+  const slug = baseName.replace(/\.md$/, "");
+  const asinSuffix = book.asin ? `-${book.asin}` : "-duplicate";
+  let duplicateIndex = 2;
+  let candidatePath = `kindle-highlights/${authorFolder}/${slug}${asinSuffix}.md`;
+
+  while (usedPaths.has(candidatePath)) {
+    candidatePath = `kindle-highlights/${authorFolder}/${slug}${asinSuffix}-${duplicateIndex}.md`;
+    duplicateIndex += 1;
+  }
+
+  return candidatePath;
+}
+
 export function buildMarkdownFile(book) {
   const notesCount = book.annotations.filter((annotation) => annotation.note).length;
   const header = joinPresentLines([
@@ -326,7 +362,7 @@ export function buildMarkdownFile(book) {
   );
 
   return {
-    name: `${slugifyTitle(book.title)}.md`,
+    name: getBookFileName(book),
     content: [header, ...sections].join("\n\n---\n\n")
   };
 }
@@ -375,10 +411,14 @@ export async function downloadZip(books, options) {
   const { document, exportDate = new Date(), jszipCtor, urlApi = URL } = options;
   const jszipClass = jszipCtor ?? (await loadJsZip(document, document.defaultView ?? globalThis));
   const zip = new jszipClass();
+  const usedPaths = new Set();
 
   for (const book of books) {
     const file = buildMarkdownFile(book);
-    zip.file(file.name, file.content);
+    const filePath = buildZipFilePath(book, usedPaths);
+
+    usedPaths.add(filePath);
+    zip.file(filePath, file.content);
   }
 
   const blob = await zip.generateAsync({ type: "blob" });
