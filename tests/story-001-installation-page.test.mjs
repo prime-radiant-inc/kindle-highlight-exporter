@@ -12,8 +12,9 @@ test("build writes a static installation page with a bookmarklet link", () => {
   const html = readFileSync("index.html", "utf8");
   const hrefMatch = html.match(/href="([^"]+)"/);
 
-  assert.match(html, /Clippings/);
-  assert.match(html, /Kindle highlights to markdown/);
+  assert.match(html, /Prime Radiant/);
+  assert.match(html, /Kindle Highlight Exporter/);
+  assert.match(html, /A Prime Radiant utility/);
   assert.match(html, /Export Kindle Highlights/);
   assert.match(html, /href="javascript:/);
   assert.match(html, /draggable="true"/);
@@ -23,6 +24,9 @@ test("build writes a static installation page with a bookmarklet link", () => {
   assert.match(html, /Download your zip/);
   assert.match(html, /&lt;highlight&gt;/);
   assert.match(html, /&lt;note&gt;/);
+  assert.match(html, /static\/brand\/logo-horizontal\.png/);
+  assert.match(html, /static\/brand\/favicon\.svg/);
+  assert.match(html, /Copyright 2026 Prime Radiant/);
   assert.ok(hrefMatch);
   assert.match(decodeURIComponent(hrefMatch[1].replace(/^javascript:/, "")), /devMaxBooks:\s*null/);
 });
