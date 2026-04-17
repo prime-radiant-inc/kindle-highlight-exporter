@@ -82,3 +82,31 @@ test("discoverBooks follows paginated Kindle library fragments and de-duplicates
     }
   ]);
 });
+
+test("discoverBooks ignores trailing empty library tokens and follows the last actionable token", async () => {
+  const html = readFileSync(fixturePath, "utf8");
+  const pageTwoHtml = readFileSync(pageTwoFixturePath, "utf8");
+  const document = new JSDOM(html).window.document;
+  const library = document.querySelector("#kp-notebook-library");
+  const fetchCalls = [];
+
+  library.insertAdjacentHTML(
+    "beforeend",
+    [
+      '<input type="hidden" class="kp-notebook-library-next-page-start" value="TOKEN_2">',
+      '<input type="hidden" class="kp-notebook-library-next-page-start" value="">'
+    ].join("")
+  );
+
+  const books = await bookmarklet.discoverBooks({
+    document,
+    fetchImpl: async (url) => {
+      fetchCalls.push(url);
+      return new Response(pageTwoHtml, { status: 200 });
+    }
+  });
+
+  assert.equal(fetchCalls.length, 1);
+  assert.match(fetchCalls[0], /token=TOKEN_2/);
+  assert.equal(books.length, 3);
+});

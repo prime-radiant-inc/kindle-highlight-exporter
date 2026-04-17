@@ -94,7 +94,11 @@ function getPaginationValue(container, selector) {
 
 function getLastValue(container, selector) {
   const matches = Array.from(container.querySelectorAll(selector));
-  const lastMatch = matches.at(-1);
+  const lastMatch = [...matches].reverse().find((match) => {
+    const value = match.value?.trim() ?? match.getAttribute("value")?.trim() ?? "";
+
+    return Boolean(value);
+  }) ?? matches.at(-1);
 
   return lastMatch?.value?.trim() ?? lastMatch?.getAttribute("value")?.trim() ?? "";
 }
