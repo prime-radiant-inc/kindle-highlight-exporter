@@ -18,18 +18,45 @@ const MONTHS = {
 };
 const JSZIP_CDN_URL = "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js";
 
+function formatIsoDate(monthName, day, year) {
+  const month = MONTHS[monthName];
+  const paddedDay = day.padStart(2, "0");
+
+  return month ? `${year}-${month}-${paddedDay}` : "";
+}
+
+function normalizeNotebookDate(value) {
+  const normalizedValue = value?.trim() ?? "";
+
+  if (!normalizedValue) {
+    return "";
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalizedValue)) {
+    return normalizedValue;
+  }
+
+  const match = normalizedValue.match(/^(?:\w+,\s+)?([A-Za-z]+) (\d{1,2}), (\d{4})$/);
+
+  if (!match) {
+    return normalizedValue;
+  }
+
+  const [, monthName, day, year] = match;
+
+  return formatIsoDate(monthName, day, year) || normalizedValue;
+}
+
 function parseAddedDate(headerText) {
-  const match = headerText.match(/Added on \w+ ([A-Za-z]+) (\d{1,2}), (\d{4})/);
+  const match = headerText.match(/^Added on (?:\w+\s+)?([A-Za-z]+) (\d{1,2}), (\d{4})$/);
 
   if (!match) {
     return "";
   }
 
   const [, monthName, day, year] = match;
-  const month = MONTHS[monthName];
-  const paddedDay = day.padStart(2, "0");
 
-  return `${year}-${month}-${paddedDay}`;
+  return formatIsoDate(monthName, day, year);
 }
 
 function parseAnnotationMetadata(headerText) {
@@ -65,6 +92,41 @@ function getPaginationValue(container, selector) {
   );
 }
 
+function getLastValue(container, selector) {
+  const matches = Array.from(container.querySelectorAll(selector));
+  const lastMatch = matches.at(-1);
+
+  return lastMatch?.value?.trim() ?? lastMatch?.getAttribute("value")?.trim() ?? "";
+}
+
+function getBookCards(container) {
+  const classCards = container.querySelectorAll(".kp-notebook-library-each-book");
+
+  if (classCards.length > 0) {
+    return Array.from(classCards);
+  }
+
+  const library = container.querySelector("#kp-notebook-library");
+
+  if (!library) {
+    return [];
+  }
+
+  return Array.from(library.children).filter((child) => child.matches?.("div"));
+}
+
+function parseBookCard(bookCard) {
+  const authorText = getTextContent(bookCard.querySelector("p.kp-notebook-searchable"));
+  const lastAnnotatedInput = bookCard.querySelector("[id^='kp-notebook-annotated-date']");
+
+  return {
+    asin: bookCard.id,
+    title: getTextContent(bookCard.querySelector("h2.kp-notebook-searchable")),
+    author: authorText.replace(/^By:\s*/, ""),
+    lastAnnotated: normalizeNotebookDate(lastAnnotatedInput?.value ?? "")
+  };
+}
+
 function getAnnotationRows(container) {
   const wrappedRows = container.querySelectorAll("#kp-notebook-annotations > .a-row.a-spacing-base");
 
@@ -76,17 +138,68 @@ function getAnnotationRows(container) {
 }
 
 export function scrapeBookList(document) {
-  return Array.from(document.querySelectorAll("#kp-notebook-library > div")).map((bookCard) => {
-    const authorText = getTextContent(bookCard.querySelector("p.kp-notebook-searchable"));
-    const lastAnnotatedInput = bookCard.querySelector("[id^='kp-notebook-annotated-date']");
+  return getBookCards(document).map(parseBookCard);
+}
 
-    return {
-      asin: bookCard.id,
-      title: getTextContent(bookCard.querySelector("h2.kp-notebook-searchable")),
-      author: authorText.replace(/^By:\s*/, ""),
-      lastAnnotated: lastAnnotatedInput?.value?.trim() ?? ""
-    };
-  });
+function parseLibraryPage(html, document) {
+  const container = document.createElement("div");
+  container.innerHTML = html;
+
+  return {
+    books: scrapeBookList(container),
+    nextToken: getLastValue(container, ".kp-notebook-library-next-page-start")
+  };
+}
+
+function getBookIdentity(book) {
+  return book.asin || `${book.title}\u0000${book.author}\u0000${book.lastAnnotated}`;
+}
+
+export async function discoverBooks(options) {
+  const { document, fetchImpl } = options;
+  const booksByIdentity = new Map();
+  const seenTokens = new Set();
+
+  const collectBooks = (books) => {
+    for (const book of books) {
+      const identity = getBookIdentity(book);
+
+      if (!booksByIdentity.has(identity)) {
+        booksByIdentity.set(identity, book);
+      }
+    }
+  };
+
+  collectBooks(scrapeBookList(document));
+
+  let token = getLastValue(document, ".kp-notebook-library-next-page-start");
+
+  while (token) {
+    if (seenTokens.has(token)) {
+      throw new Error("Library pagination token repeated");
+    }
+
+    seenTokens.add(token);
+
+    const url = new URL("https://read.amazon.com/notebook");
+    url.searchParams.set("library", "list");
+    url.searchParams.set("token", token);
+
+    const response = await fetchImpl(url.toString(), {
+      credentials: "include"
+    });
+
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+
+    const page = parseLibraryPage(await response.text(), document);
+
+    collectBooks(page.books);
+    token = page.nextToken;
+  }
+
+  return Array.from(booksByIdentity.values());
 }
 
 export function parseAnnotationPage(html, document) {
