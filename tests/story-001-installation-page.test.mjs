@@ -10,7 +10,7 @@ test.after(() => {
 test("build writes a static installation page with a bookmarklet link", () => {
   execFileSync("node", ["scripts/build.mjs"]);
   const html = readFileSync("index.html", "utf8");
-  const hrefMatch = html.match(/href="([^"]+)"/);
+  const hrefMatch = html.match(/class="bookmarklet" href="([^"]+)"/);
 
   assert.match(html, /Prime Radiant/);
   assert.match(html, /Kindle Highlight Exporter/);
@@ -39,7 +39,7 @@ test("dev build injects the max-book cap into the bookmarklet payload", () => {
     }
   });
   const html = readFileSync("index.html", "utf8");
-  const hrefMatch = html.match(/href="([^"]+)"/);
+  const hrefMatch = html.match(/class="bookmarklet" href="([^"]+)"/);
 
   assert.ok(hrefMatch);
 
