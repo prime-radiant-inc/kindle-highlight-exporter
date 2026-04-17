@@ -119,6 +119,66 @@ function getBookCards(container) {
   return Array.from(library.children).filter((child) => child.matches?.("div"));
 }
 
+function getLibraryScroller(document) {
+  return document.querySelector("#library-section .a-scroller, #library .a-scroller");
+}
+
+function getLibraryHydrationSnapshot(document) {
+  const bookIds = getBookCards(document)
+    .map((bookCard) => bookCard.id || "")
+    .join("\u0000");
+  const tokens = Array.from(document.querySelectorAll(".kp-notebook-library-next-page-start"))
+    .map((node) => node.value?.trim() ?? node.getAttribute("value")?.trim() ?? "")
+    .filter(Boolean)
+    .join("\u0000");
+  const spinnerDisplay = document.querySelector("#kp-notebook-library-spinner")?.style?.display ?? "";
+
+  return `${bookIds}\u0001${tokens}\u0001${spinnerDisplay}`;
+}
+
+async function waitForLibraryToHydrate(document, options) {
+  const scroller = getLibraryScroller(document);
+  const spinner = document.querySelector("#kp-notebook-library-spinner");
+
+  if (!scroller && !spinner) {
+    return;
+  }
+
+  const waitImpl =
+    options.waitImpl ??
+    ((delayMs) => new Promise((resolve) => setTimeout(resolve, delayMs)));
+  const pollMs = options.pollMs ?? 500;
+  const stablePolls = options.stablePolls ?? 2;
+  const maxPolls = options.maxPolls ?? 10;
+  let previousSnapshot = getLibraryHydrationSnapshot(document);
+  let stableReads = 0;
+
+  for (let pollIndex = 0; pollIndex < maxPolls; pollIndex += 1) {
+    if (scroller) {
+      scroller.scrollTop = scroller.scrollHeight;
+
+      if (document.defaultView?.Event) {
+        scroller.dispatchEvent(new document.defaultView.Event("scroll", { bubbles: true }));
+      }
+    }
+
+    await waitImpl(pollMs);
+
+    const nextSnapshot = getLibraryHydrationSnapshot(document);
+
+    if (nextSnapshot === previousSnapshot) {
+      stableReads += 1;
+
+      if (stableReads >= stablePolls) {
+        return;
+      }
+    } else {
+      previousSnapshot = nextSnapshot;
+      stableReads = 0;
+    }
+  }
+}
+
 function parseBookCard(bookCard) {
   const authorText = getTextContent(bookCard.querySelector("p.kp-notebook-searchable"));
   const lastAnnotatedInput = bookCard.querySelector("[id^='kp-notebook-annotated-date']");
@@ -174,6 +234,7 @@ export async function discoverBooks(options) {
     }
   };
 
+  await waitForLibraryToHydrate(document, options);
   collectBooks(scrapeBookList(document));
 
   let token = getLastValue(document, ".kp-notebook-library-next-page-start");

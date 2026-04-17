@@ -110,3 +110,66 @@ test("discoverBooks ignores trailing empty library tokens and follows the last a
   assert.match(fetchCalls[0], /token=TOKEN_2/);
   assert.equal(books.length, 3);
 });
+
+test("discoverBooks waits for the library pane to hydrate before locking the export count", async () => {
+  const firstBookHtml = [
+    '<div id="B07VRS84D1" class="kp-notebook-library-each-book">',
+    '<h2 class="kp-notebook-searchable">The Pragmatic Programmer</h2>',
+    '<p class="kp-notebook-searchable">By: David Thomas, Andrew Hunt</p>',
+    '<input type="hidden" id="kp-notebook-annotated-date-B07VRS84D1" value="2024-11-03">',
+    "</div>"
+  ].join("");
+  const secondBookHtml = [
+    '<div id="B08DMXZMB3" class="kp-notebook-library-each-book">',
+    '<h2 class="kp-notebook-searchable">Deep Work</h2>',
+    '<p class="kp-notebook-searchable">By: Cal Newport</p>',
+    '<input type="hidden" id="kp-notebook-annotated-date-B08DMXZMB3" value="2024-09-14">',
+    "</div>"
+  ].join("");
+  const document = new JSDOM(
+    [
+      "<!DOCTYPE html>",
+      "<html><body>",
+      '<div id="library-section"><div class="a-scroller kp-notebook-scroller-addon a-scroller-vertical"></div></div>',
+      `<div id="kp-notebook-library">${firstBookHtml}</div>`,
+      "</body></html>"
+    ].join("")
+  ).window.document;
+  const scroller = document.querySelector("#library-section .a-scroller");
+  const library = document.querySelector("#kp-notebook-library");
+  let injected = false;
+
+  Object.defineProperty(scroller, "scrollHeight", {
+    configurable: true,
+    get() {
+      return 100;
+    }
+  });
+
+  Object.defineProperty(scroller, "scrollTop", {
+    configurable: true,
+    get() {
+      return injected ? 100 : 0;
+    },
+    set(value) {
+      if (!injected && value === 100) {
+        injected = true;
+        library.insertAdjacentHTML("beforeend", secondBookHtml);
+      }
+    }
+  });
+
+  const books = await bookmarklet.discoverBooks({
+    document,
+    fetchImpl: async () => {
+      throw new Error("discoverBooks should not fetch pagination for this hydration test");
+    },
+    waitImpl: async () => {}
+  });
+
+  assert.equal(books.length, 2);
+  assert.deepEqual(
+    books.map((book) => book.title),
+    ["The Pragmatic Programmer", "Deep Work"]
+  );
+});
