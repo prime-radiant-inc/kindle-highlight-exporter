@@ -1,6 +1,7 @@
 {
   "name": "kindle-highlight-exporter",
-  "private": true,
+  "private": false,
+  "license": "Apache-2.0",
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
