@@ -30,7 +30,7 @@ test("createProgressOverlay renders progress, errors, and cleanup controls", () 
 
   overlay.showError("Skipped Deep Work");
 
-  const dismissButton = root.querySelector("button");
+  const dismissButton = root.querySelector("button:not([data-clippings-copy])");
   assert.match(root.textContent, /Skipped Deep Work/);
   assert.equal(dismissButton?.textContent, "Dismiss");
 
@@ -115,7 +115,34 @@ test("runClippingsBookmarklet exports books and removes the overlay on success",
   assert.equal(result.books.length, 3);
   assert.deepEqual(result.errors, []);
   assert.equal(clicks[0].download, "kindle-highlights-2026-04-16.zip");
-  assert.equal(document.querySelector("[data-clippings-progress]"), null);
+
+  const overlay = document.querySelector("[data-clippings-progress]");
+  assert.ok(overlay);
+  assert.match(overlay.textContent, /Exported 3 books\./);
+
+  const copyButton = overlay.querySelector("[data-clippings-copy]");
+  assert.ok(copyButton);
+  assert.equal(copyButton.textContent, "Copy markdown to clipboard");
+
+  const clipboardWrites = [];
+  Object.defineProperty(window.navigator, "clipboard", {
+    configurable: true,
+    value: {
+      async writeText(text) {
+        clipboardWrites.push(text);
+      }
+    }
+  });
+
+  await copyButton.onclick();
+
+  assert.equal(clipboardWrites.length, 1);
+  assert.match(clipboardWrites[0], /# The Pragmatic Programmer/);
+  assert.match(clipboardWrites[0], /# Deep Work/);
+  assert.match(clipboardWrites[0], /# Working in Public/);
+  assert.match(clipboardWrites[0], /Care about your craft\./);
+  assert.equal(copyButton.textContent, "Copied!");
+
   assert.deepEqual(
     FakeJsZip.instances[0].files.map((file) => file.name),
     [
@@ -126,6 +153,9 @@ test("runClippingsBookmarklet exports books and removes the overlay on success",
   );
   assert.match(FakeJsZip.instances[0].files[0].content, /Care about your craft\./);
   assert.match(FakeJsZip.instances[0].files[0].content, /Core thesis\. Revisit when motivation dips\./);
+
+  overlay.querySelector("button:not([data-clippings-copy])").click();
+  assert.equal(document.querySelector("[data-clippings-progress]"), null);
 });
 
 test("runClippingsBookmarklet leaves the overlay visible with an error when every book fails", async () => {
@@ -163,7 +193,10 @@ test("runClippingsBookmarklet leaves the overlay visible with an error when ever
   ]);
   assert.ok(overlay);
   assert.match(overlay.textContent, /Request failed/);
-  assert.equal(overlay.querySelector("button")?.textContent, "Dismiss");
+  assert.equal(
+    overlay.querySelector("button:not([data-clippings-copy])")?.textContent,
+    "Dismiss"
+  );
 });
 
 test("runClippingsBookmarklet respects a dev max-book cap", async () => {
