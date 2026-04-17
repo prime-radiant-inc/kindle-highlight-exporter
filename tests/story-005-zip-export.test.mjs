@@ -103,10 +103,7 @@ test("downloadZip writes markdown files under kindle-highlights author folders a
 
   assert.deepEqual(
     FakeJsZip.instances[0].files.map((file) => file.name),
-    [
-      "kindle-highlights/David Thomas, Andrew Hunt/the-pragmatic-programmer.md",
-      "kindle-highlights/Cal Newport/deep-work.md"
-    ]
+    ["kindle-highlights/David Thomas, Andrew Hunt/the-pragmatic-programmer.md"]
   );
   assert.equal(clicks[0].download, "kindle-highlights-2026-04-16.zip");
   assert.equal(clicks[0].href, "blob:clippings");
@@ -141,19 +138,19 @@ test("downloadZip falls back to Unknown Author and appends the ASIN when file pa
         title: "Shared Title",
         author: "Shared Author",
         asin: "B000000001",
-        annotations: []
+        annotations: [{ highlight: "First copy.", location: "101" }]
       },
       {
         title: "Shared Title",
         author: "Shared Author",
         asin: "B000000002",
-        annotations: []
+        annotations: [{ highlight: "Second copy.", location: "202" }]
       },
       {
         title: "Untitled Notes",
         author: "",
         asin: "B000000003",
-        annotations: []
+        annotations: [{ note: "Only note.", location: "303" }]
       }
     ],
     {
@@ -177,4 +174,53 @@ test("downloadZip falls back to Unknown Author and appends the ASIN when file pa
       "kindle-highlights/Unknown Author/untitled-notes.md"
     ]
   );
+});
+
+test("downloadZip normalizes author folder names into stable unicode", async () => {
+  const window = new JSDOM("<!DOCTYPE html><html><body></body></html>").window;
+  const { document } = window;
+  const decomposedAuthor = "China Miéville".normalize("NFD");
+
+  class FakeJsZip {
+    static instances = [];
+
+    constructor() {
+      this.files = [];
+      FakeJsZip.instances.push(this);
+    }
+
+    file(name, content) {
+      this.files.push({ name, content });
+    }
+
+    async generateAsync() {
+      return new Blob(["zip"]);
+    }
+  }
+
+  await bookmarklet.downloadZip(
+    [
+      {
+        title: "Embassytown",
+        author: decomposedAuthor,
+        asin: "B00685M2WG",
+        annotations: [{ highlight: "Immer.", location: "77" }]
+      }
+    ],
+    {
+      document,
+      exportDate: new Date("2026-04-16T12:00:00Z"),
+      jszipCtor: FakeJsZip,
+      urlApi: {
+        createObjectURL() {
+          return "blob:clippings";
+        },
+        revokeObjectURL() {}
+      }
+    }
+  );
+
+  assert.deepEqual(FakeJsZip.instances[0].files.map((file) => file.name), [
+    "kindle-highlights/China Miéville/embassytown.md"
+  ]);
 });

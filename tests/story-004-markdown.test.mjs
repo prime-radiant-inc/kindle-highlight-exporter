@@ -41,3 +41,24 @@ test("buildMarkdownFile creates a slugged markdown export per book", () => {
   assert.match(file.content, /<note>\nCore thesis\. Revisit when motivation dips\.\n<\/note>/);
   assert.equal(file.content.match(/^---$/gm)?.length, 2);
 });
+
+test("buildMarkdownFile omits empty highlight blocks for note-only annotations", () => {
+  const file = bookmarklet.buildMarkdownFile({
+    title: "The Quiet War",
+    author: "Paul McAuley",
+    asin: "B002Q0W8NE",
+    lastAnnotated: "2010-11-05",
+    annotations: [
+      {
+        note: "this is a fragment",
+        location: "4246"
+      }
+    ]
+  });
+
+  assert.match(file.content, /^highlights: 1$/m);
+  assert.match(file.content, /^notes: 1$/m);
+  assert.match(file.content, /location: 4246/);
+  assert.match(file.content, /<note>\nthis is a fragment\n<\/note>/);
+  assert.doesNotMatch(file.content, /<highlight>\s*<\/highlight>/);
+});
