@@ -8,6 +8,7 @@ import * as bookmarklet from "../src/bookmarklet.js";
 
 const fixtureDirectory = path.join(import.meta.dirname, "fixtures");
 const libraryHtml = readFileSync(path.join(fixtureDirectory, "notebook-library.html"), "utf8");
+const libraryPageTwoHtml = readFileSync(path.join(fixtureDirectory, "notebook-library-page-2.html"), "utf8");
 const pageOneHtml = readFileSync(path.join(fixtureDirectory, "notebook-annotations-page-1.html"), "utf8");
 const pageTwoHtml = readFileSync(path.join(fixtureDirectory, "notebook-annotations-page-2.html"), "utf8");
 
@@ -41,8 +42,14 @@ test("runClippingsBookmarklet exports books and removes the overlay on success",
   const window = new JSDOM(libraryHtml).window;
   const { document } = window;
   const clicks = [];
+  const library = document.querySelector("#kp-notebook-library");
 
   assert.equal(typeof bookmarklet.runClippingsBookmarklet, "function");
+
+  library.insertAdjacentHTML(
+    "beforeend",
+    '<input type="hidden" class="kp-notebook-library-next-page-start" value="TOKEN_LIBRARY_2">'
+  );
 
   class FakeJsZip {
     static instances = [];
@@ -70,8 +77,13 @@ test("runClippingsBookmarklet exports books and removes the overlay on success",
     exportDate: new Date("2026-04-16T12:00:00Z"),
     fetchImpl: async (url) => {
       const parsedUrl = new URL(url);
+      const libraryMode = parsedUrl.searchParams.get("library");
       const asin = parsedUrl.searchParams.get("asin");
       const token = parsedUrl.searchParams.get("token");
+
+      if (libraryMode === "list" && token === "TOKEN_LIBRARY_2") {
+        return new Response(libraryPageTwoHtml, { status: 200 });
+      }
 
       if (asin === "B07VRS84D1" && token === "") {
         return new Response(pageOneHtml, { status: 200 });
@@ -82,6 +94,10 @@ test("runClippingsBookmarklet exports books and removes the overlay on success",
       }
 
       if (asin === "B08DMXZMB3") {
+        return new Response(pageTwoHtml, { status: 200 });
+      }
+
+      if (asin === "B09VCR9Q12") {
         return new Response(pageTwoHtml, { status: 200 });
       }
 
@@ -96,13 +112,17 @@ test("runClippingsBookmarklet exports books and removes the overlay on success",
     }
   });
 
-  assert.equal(result.books.length, 2);
+  assert.equal(result.books.length, 3);
   assert.deepEqual(result.errors, []);
   assert.equal(clicks[0].download, "kindle-highlights-2026-04-16.zip");
   assert.equal(document.querySelector("[data-clippings-progress]"), null);
   assert.deepEqual(
     FakeJsZip.instances[0].files.map((file) => file.name),
-    ["the-pragmatic-programmer.md", "deep-work.md"]
+    [
+      "kindle-highlights/David Thomas, Andrew Hunt/the-pragmatic-programmer.md",
+      "kindle-highlights/Cal Newport/deep-work.md",
+      "kindle-highlights/Nadia Eghbal/working-in-public.md"
+    ]
   );
   assert.match(FakeJsZip.instances[0].files[0].content, /Care about your craft\./);
   assert.match(FakeJsZip.instances[0].files[0].content, /Core thesis\. Revisit when motivation dips\./);
@@ -198,7 +218,7 @@ test("runClippingsBookmarklet respects a dev max-book cap", async () => {
 
   assert.deepEqual(
     FakeJsZip.instances[0].files.map((file) => file.name),
-    ["the-pragmatic-programmer.md"]
+    ["kindle-highlights/David Thomas, Andrew Hunt/the-pragmatic-programmer.md"]
   );
   assert.deepEqual(result.errors, []);
   assert.equal(fetchCalls.length, 2);

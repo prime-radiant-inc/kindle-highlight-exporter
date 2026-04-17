@@ -521,7 +521,13 @@ export async function runClippingsBookmarklet(runtime = globalThis) {
   const overlay = createProgressOverlay(document);
 
   try {
-    const books = scrapeBookList(document).slice(
+    overlay.update("Discovering books...", 0, 0);
+
+    const discoveredBooks = await discoverBooks({
+      document,
+      fetchImpl
+    });
+    const books = discoveredBooks.slice(
       0,
       runtime.devMaxBooks && runtime.devMaxBooks > 0 ? runtime.devMaxBooks : Infinity
     );
